@@ -466,7 +466,6 @@ int main(int argc, char *argv[])
 
     ArgParse(argc, argv);
 
-    atexit(CleanupConfigFile);
     if( ConfigFile == NULL )
     {
         ConfigFile = malloc(320);
@@ -474,6 +473,7 @@ int main(int argc, char *argv[])
         {
             return -264;
         }
+        atexit(CleanupConfigFile);
 
         GetDefaultConfigureFile(ConfigFile, 320);
     }
