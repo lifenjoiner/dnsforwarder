@@ -418,12 +418,14 @@ static int ArgParse(int argc, char *argv_ori[])
     return 0;
 }
 
-static void CleanupConfig(void)
+static void CleanupConfigFile(void)
 {
-    if(ConfigInfo.Options.List == NULL)
-        return;
-    ConfigFree(&ConfigInfo);
     free(ConfigFile);
+}
+
+static void CleanupConfigInfo(void)
+{
+    ConfigFree(&ConfigInfo);
 }
 
 #ifdef WIN32
@@ -464,7 +466,7 @@ int main(int argc, char *argv[])
 
     ArgParse(argc, argv);
 
-    atexit(CleanupConfig);
+    atexit(CleanupConfigFile);
     if( ConfigFile == NULL )
     {
         ConfigFile = malloc(320);
@@ -499,6 +501,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    atexit(CleanupConfigInfo);
     if( EnvironmentInit() != 0 )
     {
         return -498;
