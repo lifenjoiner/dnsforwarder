@@ -25,6 +25,7 @@
 #define VERSION__ "6.4.0"
 
 static char     *ConfigFile;
+static BOOL     NeedToCleanupConfigFile = FALSE;
 static BOOL     DeamonMode;
 
 static BOOL     ShowMessages = TRUE;
@@ -420,7 +421,8 @@ static int ArgParse(int argc, char *argv_ori[])
 
 static void CleanupConfigFile(void)
 {
-    free(ConfigFile);
+    if( NeedToCleanupConfigFile )
+       free(ConfigFile);
 }
 
 static void CleanupConfigInfo(void)
@@ -474,6 +476,7 @@ int main(int argc, char *argv[])
         {
             return -264;
         }
+        NeedToCleanupConfigFile = TRUE;
 
         GetDefaultConfigureFile(ConfigFile, 320);
     }
