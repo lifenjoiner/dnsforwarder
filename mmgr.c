@@ -255,7 +255,15 @@ static int Tcp_Init(ModuleMap *ModuleMap, StringListIterator *i)
     Services = i->Next(i);
     Domains = i->Next(i);
     Parallel = i->Next(i);
-    Proxies = i->Next(i);
+    if ( strcmp(Parallel, "on") != 0 && strcmp(Parallel, "off") != 0 )
+    {
+        Proxies = Parallel;
+        Parallel = "off";
+    }
+    else
+    {
+        Proxies = i->Next(i);
+    }
 
     if( Domains == NULL )
     {
