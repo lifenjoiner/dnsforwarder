@@ -21,12 +21,12 @@ jobs:
             bin: codeblocks_win/bin/Release/dnsforwarder.exe
             shell: msys2 {0}
 
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             env: amd64
             bin: dnsforwarder
             shell: bash
 
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             env: i386
             bin: dnsforwarder
             shell: bash
@@ -58,9 +58,14 @@ jobs:
         echo Setting up gcc ${{matrix.env}} ...
         sudo dpkg --add-architecture ${{matrix.env}}
         sudo apt-get update
+        sudo apt-get install gcc-12
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12
         if [ "${{matrix.env}}" = "i386" ]; then
-          sudo apt-get install gcc-multilib
+          sudo apt-get install gcc-12-multilib
           export CFLAGS="-m32"
+        fi
+        if [ "${{runner.os}}" = "Linux" ]; then
+          export CFLAGS="$CFLAGS -Werror=use-after-free"
         fi
         sudo apt-get install libcurl4-gnutls-dev:${{matrix.env}}
         echo Configuring ...
