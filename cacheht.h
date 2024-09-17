@@ -11,6 +11,7 @@ typedef struct _Cht_Node{
     uint32_t    TTL;
     time_t      TimeAdded;
     uint32_t    Length;
+    uint32_t    UsedLength;
 } Cht_Node;
 
 typedef struct _HashTable{

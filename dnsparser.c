@@ -523,14 +523,14 @@ static char *DnsSimpleParserIterator_RowData(DnsSimpleParserIterator *i)
 
 /* Number of items generated returned */
 static int DnsSimpleParserIterator_ParseIPv4(DnsSimpleParserIterator *i,
-                                          const char *Data,
-                                          int DataLength,
-                                          const char *Format, /* "%t:%v\n" */
-                                          char *Buffer,
-                                          int BufferLength,
-                                          const char *Text,
-                                          int *AcutalDataLength
-                                          )
+                                             const char *Data,
+                                             int DataLength,
+                                             const char *Format,
+                                             char *Buffer,
+                                             int BufferLength,
+                                             const char *Text,
+                                             int *AcutalDataLength
+                                             )
 {
     char Example[LENGTH_OF_IPV4_ADDRESS_ASCII];
 
@@ -581,7 +581,7 @@ static int DnsSimpleParserIterator_ParseIPv4(DnsSimpleParserIterator *i,
 static int DnsSimpleParserIterator_ParseA(DnsSimpleParserIterator *i,
                                           const char *Data,
                                           int DataLength,
-                                          const char *Format, /* "%t:%v\n" */
+                                          const char *Format,
                                           char *Buffer,
                                           int BufferLength
                                           )
@@ -598,14 +598,14 @@ static int DnsSimpleParserIterator_ParseA(DnsSimpleParserIterator *i,
 }
 
 static int DnsSimpleParserIterator_ParseIPv6(DnsSimpleParserIterator *i,
-                                          const char *Data,
-                                          int DataLength,
-                                          const char *Format, /* "%t:%v\n" */
-                                          char *Buffer,
-                                          int BufferLength,
-                                          const char *Text,
-                                          int *AcutalDataLength
-                                          )
+                                             const char *Data,
+                                             int DataLength,
+                                             const char *Format,
+                                             char *Buffer,
+                                             int BufferLength,
+                                             const char *Text,
+                                             int *AcutalDataLength
+                                             )
 {
     char Example[LENGTH_OF_IPV6_ADDRESS_ASCII + 1];
 
@@ -654,12 +654,12 @@ static int DnsSimpleParserIterator_ParseIPv6(DnsSimpleParserIterator *i,
 }
 
 static int DnsSimpleParserIterator_ParseAAAA(DnsSimpleParserIterator *i,
-                                          const char *Data,
-                                          int DataLength,
-                                          const char *Format, /* "%t:%v\n" */
-                                          char *Buffer,
-                                          int BufferLength
-                                          )
+                                             const char *Data,
+                                             int DataLength,
+                                             const char *Format,
+                                             char *Buffer,
+                                             int BufferLength
+                                             )
 {
     return DnsSimpleParserIterator_ParseIPv6(i,
                                              Data,
@@ -672,15 +672,16 @@ static int DnsSimpleParserIterator_ParseAAAA(DnsSimpleParserIterator *i,
                                              );
 }
 
+/* <domain-name>: https://datatracker.ietf.org/doc/html/rfc1035#section-3.3 */
 static int DnsSimpleParserIterator_ParseLabeledName(DnsSimpleParserIterator *i,
-                                                   const char *Data,
-                                                   int DataLength,
-                                             const char *Format, /* "%t:%v\n" */
-                                                   char *Buffer,
-                                                   int BufferLength,
-                                                   const char *Text,
-                                                   int *AcutalDataLength
-                                                   )
+                                                    const char *Data,
+                                                    int DataLength,
+                                                    const char *Format,
+                                                    char *Buffer,
+                                                    int BufferLength,
+                                                    const char *Text,
+                                                    int *AcutalDataLength
+                                                    )
 {
     /* Static max length assumed to be 127+1 */
     char Example[128];
@@ -773,7 +774,7 @@ EXIT:
 static int DnsSimpleParserIterator_ParseCName(DnsSimpleParserIterator *i,
                                               const char *Data,
                                               int DataLength,
-                                             const char *Format, /* "%t:%v\n" */
+                                              const char *Format,
                                               char *Buffer,
                                               int BufferLength
                                               )
@@ -792,7 +793,7 @@ static int DnsSimpleParserIterator_ParseCName(DnsSimpleParserIterator *i,
 static int DnsSimpleParserIterator_Parse32Uint(DnsSimpleParserIterator *i,
                                                const char *Data,
                                                int DataLength,
-                                             const char *Format, /* "%t:%v\n" */
+                                               const char *Format,
                                                char *Buffer,
                                                int BufferLength,
                                                const char *Text,
@@ -851,7 +852,7 @@ static int DnsSimpleParserIterator_Parse32Uint(DnsSimpleParserIterator *i,
 static int DnsSimpleParserIterator_Parse16Uint(DnsSimpleParserIterator *i,
                                                const char *Data,
                                                int DataLength,
-                                             const char *Format, /* "%t:%v\n" */
+                                               const char *Format,
                                                char *Buffer,
                                                int BufferLength,
                                                const char *Text,
@@ -910,7 +911,7 @@ static int DnsSimpleParserIterator_Parse16Uint(DnsSimpleParserIterator *i,
 static int DnsSimpleParserIterator_ParseSingleTxt(DnsSimpleParserIterator *i,
                                                   const char *Data,
                                                   int DataLength,
-                                             const char *Format, /* "%t:%v\n" */
+                                                  const char *Format,
                                                   char *Buffer,
                                                   int BufferLength,
                                                   const char *Text,
@@ -986,7 +987,7 @@ EXIT:
 typedef int (*Parser)(DnsSimpleParserIterator *i,
                       const char *Data,
                       int DataLength,
-                      const char *Format, /* "%t:%v\n" */
+                      const char *Format,
                       char *Buffer,
                       int BufferLength,
                       const char *Text,
@@ -999,13 +1000,13 @@ typedef struct {
 } ParserProjector;
 
 static int DnsSimpleParserIterator_ParseData(DnsSimpleParserIterator *i,
-                                              const char *Data,
-                                              int DataLength,
-                                              const char *Format, /* "%t:%v\n" */
-                                              char *Buffer,
-                                              int BufferLength,
-                                              const ParserProjector *pp
-                                              )
+                                             const char *Data,
+                                             int DataLength,
+                                             const char *Format,
+                                             char *Buffer,
+                                             int BufferLength,
+                                             const ParserProjector *pp
+                                             )
 {
     int n = 0;
 
@@ -1049,7 +1050,7 @@ static int DnsSimpleParserIterator_ParseData(DnsSimpleParserIterator *i,
 static int DnsSimpleParserIterator_ParseSOA(DnsSimpleParserIterator *i,
                                             const char *Data,
                                             int DataLength,
-                                            const char *Format, /* "%t:%v\n" */
+                                            const char *Format,
                                             char *Buffer,
                                             int BufferLength
                                             )
@@ -1079,7 +1080,7 @@ static int DnsSimpleParserIterator_ParseSOA(DnsSimpleParserIterator *i,
 static int DnsSimpleParserIterator_ParseDomainPtr(DnsSimpleParserIterator *i,
                                                   const char *Data,
                                                   int DataLength,
-                                             const char *Format, /* "%t:%v\n" */
+                                                  const char *Format,
                                                   char *Buffer,
                                                   int BufferLength
                                                   )
@@ -1098,7 +1099,7 @@ static int DnsSimpleParserIterator_ParseDomainPtr(DnsSimpleParserIterator *i,
 static int DnsSimpleParserIterator_ParseNameServer(DnsSimpleParserIterator *i,
                                                    const char *Data,
                                                    int DataLength,
-                                             const char *Format, /* "%t:%v\n" */
+                                                   const char *Format,
                                                    char *Buffer,
                                                    int BufferLength
                                                    )
@@ -1117,7 +1118,7 @@ static int DnsSimpleParserIterator_ParseNameServer(DnsSimpleParserIterator *i,
 static int DnsSimpleParserIterator_ParseMailEx(DnsSimpleParserIterator *i,
                                                const char *Data,
                                                int DataLength,
-                                             const char *Format, /* "%t:%v\n" */
+                                               const char *Format,
                                                char *Buffer,
                                                int BufferLength
                                                )
@@ -1142,7 +1143,7 @@ static int DnsSimpleParserIterator_ParseMailEx(DnsSimpleParserIterator *i,
 static int DnsSimpleParserIterator_ParseTxt(DnsSimpleParserIterator *i,
                                             const char *Data,
                                             int DataLength,
-                                            const char *Format, /* "%t:%v\n" */
+                                            const char *Format,
                                             char *Buffer,
                                             int BufferLength
                                             )
@@ -1198,43 +1199,32 @@ static int DnsSimpleParserIterator_ParseRaw(DnsSimpleParserIterator *i,
                                             )
 {
     char a[] = "UNKNOWN (65535)";
-    BOOL IsToCache = strcmp(Format, "%v") == 0;
+    const char *TypeName = DNSGetTypeName(i->Type);
 
-    if( !IsToCache )
+    strcpy(Buffer, Format);
+
+    if( TypeName == DNS_TYPENAME_UNKNOWN )
     {
-        const char *TypeName = DNSGetTypeName(i->Type);
+        sprintf(a, "UNKNOWN (%d)", (int)(i->Type & 0xffff));
+        TypeName = (const char *)a;
+    }
 
-        strcpy(Buffer, Format);
+    if( ReplaceStr_WithLengthChecking(Buffer,
+                                      "%t",
+                                      TypeName,
+                                      BufferLength
+                                      )
+       == NULL )
+    {
+        return 0;
+    }
 
-        if( TypeName == DNS_TYPENAME_UNKNOWN )
-        {
-            sprintf(a, "UNKNOWN (%d)", (int)(i->Type & 0xffff));
-            TypeName = (const char *)a;
-        }
-
-        if( ReplaceStr_WithLengthChecking(Buffer,
-                                          "%t",
-                                          TypeName,
-                                          BufferLength
-                                          )
-           == NULL )
-        {
-            return 0;
-        }
-
-        if( i->Type != DNS_TYPE_OPT )
-        {
-            sprintf(a, "%d bytes", (int)(DataLength & 0xffff));
-            Data = (const char *)a;
-        } else {
-            Data = "Pseudo-RR";
-        }
-
+    if( i->Type != DNS_TYPE_OPT )
+    {
+        sprintf(a, "%d bytes", (int)(DataLength & 0xffff));
+        Data = (const char *)a;
     } else {
-        if( i->Type != DNS_TYPE_OPT )
-        {
-            Data = "";
-        }
+        Data = "Pseudo-RR";
     }
 
     if( ReplaceStr_WithLengthChecking(Buffer,
@@ -1322,6 +1312,65 @@ static int DnsSimpleParserIterator_TextifyData(DnsSimpleParserIterator *i,
                         );
 }
 
+/* length of CacheData returned */
+static int DnsSimpleParserIterator_ToCacheData(DnsSimpleParserIterator *i,
+                                               char *Buffer,
+                                               int BufferLength
+                                               )
+{
+    const char *Data = DNSGetResourceDataPos(i->CurrentPosition);
+
+    int (*RecordParser)(DnsSimpleParserIterator *i,
+                        const char *Data,
+                        int DataLength,
+                        const char *Format,
+                        char *Buffer,
+                        int BufferLength
+                        ) = NULL;
+
+    if( i->Type != DNS_TYPE_OPT &&
+        i->Klass != DNS_CLASS_IN
+        )
+    {
+        return 0; /* Unparsable */
+    }
+
+    switch( i->Type )
+    {
+    case DNS_TYPE_CNAME:
+        RecordParser = DnsSimpleParserIterator_ParseCName;
+        break;
+
+    default:
+        RecordParser = NULL;
+        break;
+    }
+
+    if( RecordParser != NULL )
+    {
+        int Count = RecordParser(i,
+                                 Data,
+                                 i->DataLength,
+                                 "%v",
+                                 Buffer,
+                                 BufferLength
+                                 );
+        if( Count == 0 )
+        {
+            return 0;
+        }
+        return strlen(Buffer) + 1;
+
+    } else {
+        if( i->DataLength >= BufferLength )
+        {
+            return 0;
+        }
+        memcpy(Buffer, Data, i->DataLength);
+        return i->DataLength;
+    }
+}
+
 static uint32_t DnsSimpleParserIterator_GetTTL(DnsSimpleParserIterator *i)
 {
     return DNSGetTTL(i->CurrentPosition);
@@ -1379,6 +1428,7 @@ int DnsSimpleParserIterator_Init(DnsSimpleParserIterator *i, DnsSimpleParser *p)
     i->GetNameLength = DnsSimpleParserIterator_GetNameLength;
     i->RowData = DnsSimpleParserIterator_RowData;
     i->TextifyData = DnsSimpleParserIterator_TextifyData;
+    i->ToCacheData = DnsSimpleParserIterator_ToCacheData;
     i->GetTTL = DnsSimpleParserIterator_GetTTL;
 
     return 0;

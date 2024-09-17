@@ -259,7 +259,11 @@ struct _DnsSimpleParserIterator{
     int (*GetNameLength)(DnsSimpleParserIterator *i);
     char *(*RowData)(DnsSimpleParserIterator *i);
     int (*TextifyData)(DnsSimpleParserIterator *i,
-                       const char *Format, /* "%t:%v\n" */
+                       const char *Format, /* "%t: %v\n" */
+                       char *Buffer,
+                       int BufferLength
+                       );
+    int (*ToCacheData)(DnsSimpleParserIterator *i,
                        char *Buffer,
                        int BufferLength
                        );

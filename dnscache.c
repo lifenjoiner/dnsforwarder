@@ -358,7 +358,7 @@ static int32_t DNSCache_GetAviliableChunk(uint32_t Length, Cht_Node **Out)
 {
     int32_t NodeNumber;
     Cht_Node    *Node;
-    uint32_t    RoundedLength = ROUND_UP(Length, 8);
+    uint32_t    RoundedLength = ROUND_UP(Length, 4);
 
     BOOL    NewCreated;
 
@@ -430,8 +430,8 @@ static uint32_t DNSCache_CacheMinTTL(const char *Content, size_t Length, uint32_
     return RecordTTL;
 }
 
-/* Item: \xFFStrName\x01IntType\x01IntClass\x00ParsedAnswer\x0A
-   ht: StrName\x01IntType\x01IntClass, NtcTriplet
+/* Item: \xFFStrName\x01HexType\x01HexClass\x00(R)Data
+   ht: StrName\x01HexType\x01HexClass, NtcTriplet
    https://tools.ietf.org/html/rfc1035 */
 static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
                                     time_t CurrentTime,
@@ -441,6 +441,7 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
     /* used to store cache data temporarily, TODO: no bounds checking here */
     char            Buffer[512];
     char            *Item = Buffer + 1;
+    int             Length;
 
     /* Iterator of `Buffer' */
     char            *BufferItr;
@@ -492,7 +493,7 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
     /* Set record type and class */
     BufferItr += snprintf(BufferItr,
                           sizeof(Buffer) - (BufferItr - Buffer),
-                          "\1%d\1%d",
+                          "\1%X\1%X",
                           i->Type,
                           i->Klass
                           );
@@ -502,29 +503,26 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
     }
 
     /* End of name\1type\1class triple */
-    *BufferItr++ = '\0';
+    BufferItr++;
     if( BufferItr >= Buffer + sizeof(Buffer) )
     {
         return -4;
     }
 
     /* Generate data and store them */
-    if( i->TextifyData(i,
-                       "%v",
-                       BufferItr,
-                       sizeof(Buffer) - (BufferItr - Buffer)
-                       ) <= 0 )
+    Length = i->ToCacheData(i,
+                            BufferItr,
+                            sizeof(Buffer) - (BufferItr - Buffer)
+                            );
+    if( Length <= 0 )
     {
         return -5;
     }
-    BufferItr += strlen(BufferItr) + 1;
+    BufferItr += Length;
     if( BufferItr >= Buffer + sizeof(Buffer) )
     {
         return -6;
     }
-
-    /* Mark the end */
-    *BufferItr = CACHE_END;
 
     /* The whole cache data generating completed */
 
@@ -569,13 +567,14 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
         }
 
         /* Get a usable chunk and its subscript */
-        Subscript = DNSCache_GetAviliableChunk(BufferItr - Buffer + 1, &Node);
+        Subscript = DNSCache_GetAviliableChunk(BufferItr - Buffer, &Node);
 
         /* If there is a usable chunk */
         if(Subscript >= 0)
         {
             /* Copy the cache to this entry */
-            memcpy(MapStart + Node->Offset, Buffer, BufferItr - Buffer + 1);
+            memcpy(MapStart + Node->Offset, Buffer, BufferItr - Buffer);
+            Node->UsedLength = BufferItr - Buffer;
 
             if( CacheParallel )
             {
@@ -647,16 +646,16 @@ int DNSCache_AddItemsToCache(MsgContext *MsgCtx, BOOL IsFirst)
 }
 
 /* State code returned */
-static int DNSCache_GetRawRecordsFromCache( __in    const char *Name,
-                                            __in    DNSRecordType Type,
-                                            __in    DNSRecordClass Klass,
-                                            __inout DnsGenerator *g,
-                                            __in    time_t CurrentTime
-                                            )
+static int DNSCache_GetRawRecordsFromCache(__in    const char *Name,
+                                           __in    DNSRecordType Type,
+                                           __in    DNSRecordClass Klass,
+                                           __inout DnsGenerator *g,
+                                           __in    time_t CurrentTime
+                                           )
 {
     int Ret = -100;
 
-    char Name_Type_Class[256];
+    char Name_Type_Class[253 + 1 + 4 + 1 + 4 + 1];
 
     uint32_t    NewTTL;
 
@@ -664,7 +663,7 @@ static int DNSCache_GetRawRecordsFromCache( __in    const char *Name,
 
     if( snprintf(Name_Type_Class,
              sizeof(Name_Type_Class),
-             "%s\1%d\1%d",
+             "%s\1%X\1%X",
              Name,
              Type,
              Klass
@@ -701,15 +700,14 @@ static int DNSCache_GetRawRecordsFromCache( __in    const char *Name,
                 NewTTL = Node->TTL - (CurrentTime - Node->TimeAdded);
             }
 
-            /* Data */
+            /* Skip key to get data */
             for(CacheItr = MapStart + Node->Offset + 1;
                 *CacheItr != '\0';
                 ++CacheItr
             );
-            /* Now *CacheItr == '\0' */
             ++CacheItr;
-            /* Now the data position */
 
+            /* Now the data position */
             switch( Type )
             {
             case DNS_TYPE_CNAME:
@@ -719,22 +717,13 @@ static int DNSCache_GetRawRecordsFromCache( __in    const char *Name,
                 }
                 break;
 
-            case DNS_TYPE_A:
-                if( g->A(g, Name, CacheItr, NewTTL) != 0 )
-                {
-                    return -2;
-                }
-                break;
-
-            case DNS_TYPE_AAAA:
-                if( g->AAAA(g, Name, CacheItr, NewTTL) != 0 )
-                {
-                    return -3;
-                }
-                break;
-
             default:
-                return -4;
+                if( g->RawData(g, Name, Type, Klass, CacheItr,
+                               MapStart + Node->Offset + Node->UsedLength - CacheItr,
+                               NewTTL) != 0 )
+                {
+                    return -256;
+                }
                 break;
             }
         }
@@ -743,18 +732,31 @@ static int DNSCache_GetRawRecordsFromCache( __in    const char *Name,
     return Ret;
 }
 
-static Cht_Node *DNSCache_GetCNameFromCache(__in char *Name, __out char *Buffer, __in time_t CurrentTime)
+static Cht_Node *DNSCache_GetCNameFromCache(__in char *Name,
+                                            __out char *Buffer,
+                                            __in time_t CurrentTime
+                                            )
 {
-    char Name_Type_Class[256];
+    char Name_Type_Class[253 + 1 + 4 + 1 + 4 + 1];
     Cht_Node *Node = NULL;
 
-    if( snprintf(Name_Type_Class, sizeof(Name_Type_Class), "%s\1%d\1%d", Name, DNS_TYPE_CNAME, 1) >= sizeof(Name_Type_Class) ){
+    if( snprintf(Name_Type_Class,
+                 sizeof(Name_Type_Class),
+                 "%s\1%X\1%X", Name,
+                 DNS_TYPE_CNAME,
+                 1) >= sizeof(Name_Type_Class)
+                 )
+    {
         return NULL;
     }
 
     do
     {
-        Node = DNSCache_FindFromCache(Name_Type_Class, strlen(Name_Type_Class) + 1, Node, CurrentTime);
+        Node = DNSCache_FindFromCache(Name_Type_Class,
+                                      strlen(Name_Type_Class) + 1,
+                                      Node,
+                                      CurrentTime
+                                      );
         if( Node == NULL )
         {
             return NULL;
@@ -773,7 +775,7 @@ static int DNSCache_GetByQuestion(__inout DnsGenerator *g,
                                   __in time_t CurrentTime
                                   )
 {
-    char    Name[260];
+    char    Name[253 + 1];
 
     DnsSimpleParserIterator i;
 
@@ -807,7 +809,7 @@ static int DNSCache_GetByQuestion(__inout DnsGenerator *g,
     /* If the intended type is not DNS_TYPE_CNAME, then first find its cname */
     if( i.Type != DNS_TYPE_CNAME )
     {
-        char    CName[260];
+        char    CName[253 + 1];
         Cht_Node *Node = NULL;
 
         while( (Node = DNSCache_GetCNameFromCache(Name, CName, CurrentTime))

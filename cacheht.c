@@ -70,6 +70,7 @@ static int CacheHT_CreateNewNode(CacheHT *h, uint32_t ChunkSize, Cht_Node **Out,
     NewNode->Next = -1;
 
     NewNode->Length = ChunkSize;
+    NewNode->UsedLength = 0;
 
     if( Out != NULL )
     {
@@ -105,6 +106,7 @@ int32_t CacheHT_FindUnusedNode(CacheHT      *h,
                 FirstNode->Next = SecondNode->Next;
             }
 
+            SecondNode->UsedLength = 0;
             SecondNode->Next = -1;
 
             if( Out != NULL )
