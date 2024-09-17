@@ -864,16 +864,6 @@ int DNSCache_FetchFromCache(MsgContext *MsgCtx, int BufferLength)
         return -792;
     }
 
-    /* We did/do NOT cache these types of answers.
-        EDNS0: https://datatracker.ietf.org/doc/html/rfc2671
-        DNSSEC Indicating: https://datatracker.ietf.org/doc/html/rfc3225
-        EDNS Extensions: https://datatracker.ietf.org/doc/html/rfc6891
-     */
-    if( h->EDNSEnabled )
-    {
-        return -4;
-    }
-
     if( DnsSimpleParser_Init(&p, RequestContent, h->EntityLength, FALSE) != 0 )
     {
         return -1;
@@ -906,6 +896,20 @@ int DNSCache_FetchFromCache(MsgContext *MsgCtx, int BufferLength)
     g.Header->Flags.RecursionAvailable = 1;
     g.Header->Flags.ResponseCode = 0;
     g.Header->Flags.Type = 0;
+
+    /* hop-by-hop extension:
+        EDNS Extensions: https://datatracker.ietf.org/doc/html/rfc6891
+        EDNS0: https://datatracker.ietf.org/doc/html/rfc2671
+        DNSSEC Indicating: https://datatracker.ietf.org/doc/html/rfc3225
+     */
+    if( h->EDNSEnabled )
+    {
+        while( g.NextPurpose(&g) != DNS_RECORD_PURPOSE_ADDITIONAL );
+        if( g.EDns(&g, 1280) != 0 )
+        {
+            return -4;
+        }
+    }
 
     ResultLength = DNSCompress(HereToGenerate, g.Length(&g));
     if( ResultLength < 0 )
