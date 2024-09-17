@@ -71,6 +71,8 @@ const DNSSECAlgorithm DNSSECAlgorithmList[] = {
     {255,   "(reserved)"}
 };
 
+const char *DNS_TYPENAME_UNKNOWN = "UNKNOWN";
+
 const char *DNSGetTypeName(uint16_t Num)
 {
     int loop;
@@ -83,7 +85,7 @@ const char *DNSGetTypeName(uint16_t Num)
         }
     }
 
-    return "UNKNOWN";
+    return DNS_TYPENAME_UNKNOWN;
 }
 
 static int DNSSECAlgorithm_Compare(const DNSSECAlgorithm *Key, const DNSSECAlgorithm *Element)

@@ -1189,31 +1189,57 @@ static int DnsSimpleParserIterator_ParseTxt(DnsSimpleParserIterator *i,
     return n;
 }
 
-static int DnsSimpleParserIterator_Unparsable(const char *Format, /* "%t:%v\n" */
-                                              char *Buffer,
-                                              int BufferLength,
-                                              DNSRecordType Type
-                                              )
+static int DnsSimpleParserIterator_ParseRaw(DnsSimpleParserIterator *i,
+                                            const char *Data,
+                                            int DataLength,
+                                            const char *Format,
+                                            char *Buffer,
+                                            int BufferLength
+                                            )
 {
-    char a[] = "4294967295";
+    char a[] = "UNKNOWN (65535)";
+    BOOL IsToCache = strcmp(Format, "%v") == 0;
 
-    strcpy(Buffer, Format);
-
-    if( ReplaceStr_WithLengthChecking(Buffer,
-                                      "%t",
-                                      "Unparsable type",
-                                      BufferLength
-                                      )
-       == NULL )
+    if( !IsToCache )
     {
-        return 0;
-    }
+        const char *TypeName = DNSGetTypeName(i->Type);
 
-    sprintf(a, "%d", (int)Type);
+        strcpy(Buffer, Format);
+
+        if( TypeName == DNS_TYPENAME_UNKNOWN )
+        {
+            sprintf(a, "UNKNOWN (%d)", (int)(i->Type & 0xffff));
+            TypeName = (const char *)a;
+        }
+
+        if( ReplaceStr_WithLengthChecking(Buffer,
+                                          "%t",
+                                          TypeName,
+                                          BufferLength
+                                          )
+           == NULL )
+        {
+            return 0;
+        }
+
+        if( i->Type != DNS_TYPE_OPT )
+        {
+            sprintf(a, "%d bytes", (int)(DataLength & 0xffff));
+            Data = (const char *)a;
+        } else {
+            Data = "Pseudo-RR";
+        }
+
+    } else {
+        if( i->Type != DNS_TYPE_OPT )
+        {
+            Data = "";
+        }
+    }
 
     if( ReplaceStr_WithLengthChecking(Buffer,
                                       "%v",
-                                      a,
+                                      Data,
                                       BufferLength
                                       )
        == NULL )
@@ -1226,7 +1252,7 @@ static int DnsSimpleParserIterator_Unparsable(const char *Format, /* "%t:%v\n" *
 
 /* Number of items generated returned */
 static int DnsSimpleParserIterator_TextifyData(DnsSimpleParserIterator *i,
-                                             const char *Format, /* "%t:%v\n" */
+                                               const char *Format,
                                                char *Buffer,
                                                int BufferLength
                                                )
@@ -1236,7 +1262,7 @@ static int DnsSimpleParserIterator_TextifyData(DnsSimpleParserIterator *i,
     int (*RecordParser)(DnsSimpleParserIterator *i,
                         const char *Data,
                         int DataLength,
-                        const char *Format, /* "%t:%v\n" */
+                        const char *Format,
                         char *Buffer,
                         int BufferLength
                         ) = NULL;
@@ -1283,26 +1309,17 @@ static int DnsSimpleParserIterator_TextifyData(DnsSimpleParserIterator *i,
         break;
 
     default:
-        RecordParser = NULL;
+        RecordParser = DnsSimpleParserIterator_ParseRaw;
         break;
     }
 
-    if( RecordParser != NULL )
-    {
-        return RecordParser(i,
-                            Data,
-                            i->DataLength,
-                            Format,
-                            Buffer,
-                            BufferLength
-                            );
-    } else {
-        return DnsSimpleParserIterator_Unparsable(Format,
-                                                  Buffer,
-                                                  BufferLength,
-                                                  i->Type
-                                                  );
-    }
+    return RecordParser(i,
+                        Data,
+                        i->DataLength,
+                        Format,
+                        Buffer,
+                        BufferLength
+                        );
 }
 
 static uint32_t DnsSimpleParserIterator_GetTTL(DnsSimpleParserIterator *i)

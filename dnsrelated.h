@@ -69,6 +69,8 @@ extern const DNSTypeAndName DNSTypeList[];
 
 extern const DNSSECAlgorithm DNSSECAlgorithmList[];
 
+extern const char *DNS_TYPENAME_UNKNOWN;
+
 const char *DNSGetTypeName(uint16_t Num);
 
 const char *DNSSECGetAlgorithmName(int Num);
