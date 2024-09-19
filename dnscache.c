@@ -663,22 +663,23 @@ static int DNSCache_GetRawRecordsFromCache(__in    const char *Name,
 
     Cht_Node *Node = NULL; /* Important */
 
-    if( snprintf(Name_Type_Class,
-             sizeof(Name_Type_Class),
-             "%s\1%X\1%X",
-             Name,
-             Type,
-             Klass
-             )
-        >= sizeof(Name_Type_Class)
-        ) {
+    int KeyLength = snprintf(Name_Type_Class,
+                             sizeof(Name_Type_Class),
+                             "%s\1%X\1%X",
+                             Name,
+                             Type,
+                             Klass
+                             );
+
+    if( KeyLength >= sizeof(Name_Type_Class) )
+    {
             return -609;
     }
 
     do
     {
         Node = DNSCache_FindFromCache(Name_Type_Class,
-                                      strlen(Name_Type_Class) + 1,
+                                      KeyLength + 1,
                                       Node,
                                       CurrentTime
                                       );
@@ -703,11 +704,7 @@ static int DNSCache_GetRawRecordsFromCache(__in    const char *Name,
             }
 
             /* Skip key to get data */
-            for(CacheItr = MapStart + Node->Offset + 1;
-                *CacheItr != '\0';
-                ++CacheItr
-            );
-            ++CacheItr;
+            CacheItr = MapStart + Node->Offset + 1 + KeyLength + 1;
 
             /* Now the data position */
             switch( Type )
@@ -721,7 +718,7 @@ static int DNSCache_GetRawRecordsFromCache(__in    const char *Name,
 
             default:
                 if( g->RawData(g, Name, Type, Klass, CacheItr,
-                               MapStart + Node->Offset + Node->UsedLength - CacheItr,
+                               Node->UsedLength - 1 - KeyLength - 1,
                                NewTTL) != 0 )
                 {
                     return -256;
@@ -741,13 +738,15 @@ static Cht_Node *DNSCache_GetCNameFromCache(__in char *Name,
 {
     char Name_Type_Class[253 + 1 + 4 + 1 + 4 + 1];
     Cht_Node *Node = NULL;
+    int KeyLength = snprintf(Name_Type_Class,
+                             sizeof(Name_Type_Class),
+                             "%s\1%X\1%X",
+                             Name,
+                             DNS_TYPE_CNAME,
+                             1
+                             );
 
-    if( snprintf(Name_Type_Class,
-                 sizeof(Name_Type_Class),
-                 "%s\1%X\1%X", Name,
-                 DNS_TYPE_CNAME,
-                 1) >= sizeof(Name_Type_Class)
-                 )
+    if( KeyLength >= sizeof(Name_Type_Class) )
     {
         return NULL;
     }
@@ -755,7 +754,7 @@ static Cht_Node *DNSCache_GetCNameFromCache(__in char *Name,
     do
     {
         Node = DNSCache_FindFromCache(Name_Type_Class,
-                                      strlen(Name_Type_Class) + 1,
+                                      KeyLength + 1,
                                       Node,
                                       CurrentTime
                                       );
