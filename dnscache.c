@@ -11,7 +11,7 @@
 #include "timedtask.h"
 #include "domainstatistic.h"
 
-#define CACHE_VERSION   22
+#define CACHE_VERSION   23
 
 #define CACHE_END   '\x0A'
 #define CACHE_START '\xFF'
@@ -529,7 +529,7 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
     /* Add the cache item to the main cache zone below */
 
     /* Determine whether the cache item has existed in the main cache zone */
-    if(DNSCache_FindFromCache(Item, BufferItr - Buffer, NULL, CurrentTime) == NULL)
+    if(DNSCache_FindFromCache(Item, BufferItr - Item, NULL, CurrentTime) == NULL)
     {
         /* If not, add it */
 
@@ -578,7 +578,8 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
 
             if( CacheParallel )
             {
-                RecordTTL = DNSCache_CacheMinTTL(Item, strlen(Item), RecordTTL, CurrentTime);
+                /* Exact match: requires trailing '\x0' */
+                RecordTTL = DNSCache_CacheMinTTL(Item, strlen(Item) + 1, RecordTTL, CurrentTime);
             }
 
             /* Assign TTL */
