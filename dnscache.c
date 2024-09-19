@@ -630,6 +630,7 @@ int DNSCache_AddItemsToCache(MsgContext *MsgCtx, BOOL IsFirst)
 
         BOOL CachedType = i.Type == DNS_TYPE_A ||
                           i.Type == DNS_TYPE_AAAA ||
+                          i.Type == DNS_TYPE_HTTPS ||
                           i.Type == DNS_TYPE_CNAME;
 
         BOOL CachedClass = i.Klass == DNS_CLASS_IN;
@@ -792,7 +793,8 @@ static int DNSCache_GetByQuestion(__inout DnsGenerator *g,
     if( i.Klass != DNS_CLASS_IN ||
         (i.Type != DNS_TYPE_CNAME &&
             i.Type != DNS_TYPE_A &&
-            i.Type != DNS_TYPE_AAAA
+            i.Type != DNS_TYPE_AAAA &&
+            i.Type != DNS_TYPE_HTTPS
             )
         )
     {
