@@ -96,6 +96,15 @@ struct _DnsGenerator {
                    int DataLength,
                    int Ttl
                    );
+
+    int (*Generate)(DnsGenerator *g,
+                    const char *Name,
+                    DNSRecordType Type,
+                    DNSRecordClass Klass,
+                    const char *Data,
+                    int DataLength,
+                    int Ttl
+                    );
 };
 
 int DnsGenerator_Init(DnsGenerator *g,

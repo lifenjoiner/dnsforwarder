@@ -771,6 +771,36 @@ static int StripedLength(const char *Origin, int OriginLength)
     }
 }
 
+static int DnsGenerator_Generate(DnsGenerator *g,
+                                 const char *Name,
+                                 DNSRecordType Type,
+                                 DNSRecordClass Klass,
+                                 const char *Data,
+                                 int DataLength,
+                                 int Ttl
+                                 )
+{
+    int Ret = -256;
+
+    switch( Type )
+    {
+    case DNS_TYPE_CNAME:
+        Ret = g->CName(g, Name, Data, Ttl);
+        break;
+
+    case DNS_TYPE_A:
+    case DNS_TYPE_AAAA:
+    case DNS_TYPE_HTTPS:
+        Ret = g->RawData(g, Name, Type, Klass, Data, DataLength, Ttl);
+        break;
+
+    default:
+        break;
+    }
+
+    return Ret;
+}
+
 int DnsGenerator_Init(DnsGenerator *g,
                       char *Buffer, /* generate to here */
                       int BufferLength,
@@ -861,6 +891,7 @@ int DnsGenerator_Init(DnsGenerator *g,
     g->AAAA = DnsGenerator_AAAA;
     g->EDns = DnsGenerator_EDns;
     g->RawData = DnsGenerator_RawData;
+    g->Generate = DnsGenerator_Generate;
 
     return 0;
 }

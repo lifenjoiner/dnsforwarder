@@ -690,11 +690,10 @@ static int DNSCache_GetRawRecordsFromCache(__in    const char *Name,
             break;
         }
 
-        Ret = 0;
-
         if( Node->TTL != 0 )
         {
             char *CacheItr;
+            int iRet;
 
             /* TTL*/
             if( IgnoreTTL == TRUE )
@@ -708,24 +707,19 @@ static int DNSCache_GetRawRecordsFromCache(__in    const char *Name,
             CacheItr = MapStart + Node->Offset + 1 + KeyLength + 1;
 
             /* Now the data position */
-            switch( Type )
+            iRet = g->Generate(g, Name, Type, Klass, CacheItr,
+                        MapStart + Node->Offset + Node->UsedLength - CacheItr,
+                        NewTTL
+                        );
+            if( iRet != 0 )
             {
-            case DNS_TYPE_CNAME:
-                if( g->CName(g, Name, CacheItr, NewTTL) != 0 )
+                if( Ret == 0 )
                 {
-                    return -1;
-                }
-                break;
-
-            default:
-                if( g->RawData(g, Name, Type, Klass, CacheItr,
-                               Node->UsedLength - 1 - KeyLength - 1,
-                               NewTTL) != 0 )
-                {
-                    return -256;
+                    INFO("Partial cache used for: %s\n", Name_Type_Class);
                 }
                 break;
             }
+            Ret = iRet;
         }
     } while ( TRUE );
 
