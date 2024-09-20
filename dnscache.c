@@ -430,8 +430,8 @@ static uint32_t DNSCache_CacheMinTTL(const char *Content, size_t Length, uint32_
     return RecordTTL;
 }
 
-/* Item: \xFFStrName\x01HexType\x01HexClass\x00(R)Data
-   ht: StrName\x01HexType\x01HexClass, NtcTriplet
+/* Item: \xFFStrName\x20HexType\x20HexClass\x00(R)Data
+   ht: StrName\x20HexType\x20HexClass, NtcTriplet
    https://tools.ietf.org/html/rfc1035 */
 static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
                                     time_t CurrentTime,
@@ -493,7 +493,7 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
     /* Set record type and class */
     BufferItr += snprintf(BufferItr,
                           sizeof(Buffer) - (BufferItr - Buffer),
-                          "\1%X\1%X",
+                          " %X %X",
                           i->Type,
                           i->Klass
                           );
@@ -502,7 +502,7 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
         return -3;
     }
 
-    /* End of name\1type\1class triple */
+    /* End of name\x20type\x20class triplet */
     BufferItr++;
     if( BufferItr >= Buffer + sizeof(Buffer) )
     {
@@ -665,7 +665,7 @@ static int DNSCache_GetRawRecordsFromCache(__in    const char *Name,
 
     int KeyLength = snprintf(Name_Type_Class,
                              sizeof(Name_Type_Class),
-                             "%s\1%X\1%X",
+                             "%s %X %X",
                              Name,
                              Type,
                              Klass
@@ -740,7 +740,7 @@ static Cht_Node *DNSCache_GetCNameFromCache(__in char *Name,
     Cht_Node *Node = NULL;
     int KeyLength = snprintf(Name_Type_Class,
                              sizeof(Name_Type_Class),
-                             "%s\1%X\1%X",
+                             "%s %X %X",
                              Name,
                              DNS_TYPE_CNAME,
                              1
