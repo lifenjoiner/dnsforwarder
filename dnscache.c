@@ -354,7 +354,7 @@ BOOL Cache_IsInited(void)
     return Inited;
 }
 
-static int32_t DNSCache_GetAviliableChunk(uint32_t Length, Cht_Node **Out)
+static int32_t DNSCache_GetAvailableChunk(uint32_t Length, Cht_Node **Out)
 {
     int32_t NodeNumber;
     Cht_Node    *Node;
@@ -567,7 +567,7 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
         }
 
         /* Get a usable chunk and its subscript */
-        Subscript = DNSCache_GetAviliableChunk(BufferItr - Buffer, &Node);
+        Subscript = DNSCache_GetAvailableChunk(BufferItr - Buffer, &Node);
 
         /* If there is a usable chunk */
         if(Subscript >= 0)
