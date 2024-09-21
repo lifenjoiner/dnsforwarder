@@ -592,6 +592,7 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
 
             ++(*CacheCount);
         } else {
+            WARNING("No available cache: %s\n", Item);
             return -1;
         }
     }
