@@ -532,6 +532,7 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
     if(DNSCache_FindFromCache(Item, BufferItr - Item, NULL, CurrentTime) == NULL)
     {
         /* If not, add it */
+        DEBUG("Add cache: %s\n", Item);
 
         /* Subscript of a chunk in the main cache zone */
         int32_t Subscript;
@@ -677,6 +678,7 @@ static int DNSCache_GetRawRecordsFromCache(__in    const char *Name,
             return -609;
     }
 
+    DEBUG("Get cache: %s\n", Name_Type_Class);
     do
     {
         Node = DNSCache_FindFromCache(Name_Type_Class,
