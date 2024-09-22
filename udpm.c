@@ -116,14 +116,10 @@ UdpM_Works(UdpM *m)
                     break;
                 }
 
-                m->Departure = socket(family, SOCK_DGRAM, IPPROTO_UDP);
             } else { /* Parallel query */
                 family = m->Parallels.familiy;
-                m->Departure = socket(m->Parallels.familiy,
-                                      SOCK_DGRAM,
-                                      IPPROTO_UDP
-                                      );
             }
+            m->Departure = socket(family, SOCK_DGRAM, IPPROTO_UDP);
 
             if( m->Departure == INVALID_SOCKET )
             {
