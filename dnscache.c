@@ -457,32 +457,6 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
         return -1;
     }
 
-    /* Detemine which TTL scheme will be used */
-    if( InfectedTtlContent != NULL )
-    {
-        switch( InfectedTtlContent->Infection )
-        {
-            default:
-            case TTL_CTRL_INFECTION_AGGRESSIVLY:
-                TtlContent = InfectedTtlContent;
-                break;
-
-            case TTL_CTRL_INFECTION_PASSIVLY:
-                TtlContent = CacheTtlCrtl_Get(TtlCtrl, Item);
-                if( TtlContent == NULL )
-                {
-                    TtlContent = InfectedTtlContent;
-                }
-                break;
-
-            case TTL_CTRL_INFECTION_NONE:
-                TtlContent = CacheTtlCrtl_Get(TtlCtrl, Item);
-                break;
-        }
-    } else {
-        TtlContent = CacheTtlCrtl_Get(TtlCtrl, Item);
-    }
-
     /* Jump just over the name, right at '\0' */
     BufferItr = Item + strlen(Item);
     if( BufferItr >= Buffer + sizeof(Buffer) )
@@ -541,6 +515,32 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
 
         /* Node with subscript `Subscript' */
         Cht_Node    *Node;
+
+        /* Detemine which TTL scheme will be used */
+        if( InfectedTtlContent != NULL )
+        {
+            switch( InfectedTtlContent->Infection )
+            {
+                default:
+                case TTL_CTRL_INFECTION_AGGRESSIVLY:
+                    TtlContent = InfectedTtlContent;
+                    break;
+
+                case TTL_CTRL_INFECTION_PASSIVLY:
+                    TtlContent = CacheTtlCrtl_Get(TtlCtrl, Item);
+                    if( TtlContent == NULL )
+                    {
+                        TtlContent = InfectedTtlContent;
+                    }
+                    break;
+
+                case TTL_CTRL_INFECTION_NONE:
+                    TtlContent = CacheTtlCrtl_Get(TtlCtrl, Item);
+                    break;
+            }
+        } else {
+            TtlContent = CacheTtlCrtl_Get(TtlCtrl, Item);
+        }
 
         if( TtlContent != NULL )
         {
