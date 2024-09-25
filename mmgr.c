@@ -819,7 +819,7 @@ int MMgr_Send(const char *Buffer, int BufferLength)
         return 0;
     }
 
-    /* Ordinary modeles */
+    /* Ordinary models */
 
     RWLock_RdLock(ModulesLock);
 

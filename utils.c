@@ -614,20 +614,20 @@ int IPv6AddressToAsc(const void *Address, void *Buffer)
     }
     *s = 0x0;
 
-    return 0;
+    return s - (char *)Buffer;
 }
 
 int IPv4AddressToAsc(const void *Address, void *Buffer)
 {
     const char  *a = (const char *)Address;
 
-    sprintf(Buffer, "%u.%u.%u.%u",  GET_8_BIT_U_INT(a),
-                                    GET_8_BIT_U_INT(a + 1),
-                                    GET_8_BIT_U_INT(a + 2),
-                                    GET_8_BIT_U_INT(a + 3)
-        );
-
-    return 0;
+    return sprintf(Buffer,
+                   "%u.%u.%u.%u",
+                   GET_8_BIT_U_INT(a),
+                   GET_8_BIT_U_INT(a + 1),
+                   GET_8_BIT_U_INT(a + 2),
+                   GET_8_BIT_U_INT(a + 3)
+                   );
 }
 
 int GetConfigDirectory(char *out)

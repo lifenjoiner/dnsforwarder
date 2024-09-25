@@ -354,6 +354,21 @@ BOOL Cache_IsInited(void)
     return Inited;
 }
 
+static BOOL IsValidCachedType(DNSRecordType Type)
+{
+    return  /* raw */
+            Type == DNS_TYPE_A ||
+            Type == DNS_TYPE_AAAA ||
+            Type == DNS_TYPE_HTTPS ||
+            Type == DNS_TYPE_TXT ||
+            /* labeled names */
+            Type == DNS_TYPE_CNAME ||
+            Type == DNS_TYPE_PTR ||
+            Type == DNS_TYPE_NS ||
+            /* Has labeled names */
+            Type == DNS_TYPE_MX;
+}
+
 static int32_t DNSCache_GetAvailableChunk(uint32_t Length, Cht_Node **Out)
 {
     int32_t NodeNumber;
@@ -438,8 +453,7 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
                                     const CtrlContent *InfectedTtlContent
                                     )
 {
-    /* used to store cache data temporarily, TODO: no bounds checking here */
-    char            Buffer[512];
+    char            Buffer[512]; /* covers most cases */
     char            *Item = Buffer + 1;
     int             Length;
 
@@ -631,14 +645,9 @@ int DNSCache_AddItemsToCache(MsgContext *MsgCtx, BOOL IsFirst)
         BOOL RightPurpose = i.Purpose != DNS_RECORD_PURPOSE_UNKNOWN &&
                             i.Purpose != DNS_RECORD_PURPOSE_QUESTION;
 
-        BOOL CachedType = i.Type == DNS_TYPE_A ||
-                          i.Type == DNS_TYPE_AAAA ||
-                          i.Type == DNS_TYPE_HTTPS ||
-                          i.Type == DNS_TYPE_CNAME;
-
         BOOL CachedClass = i.Klass == DNS_CLASS_IN;
 
-        if( RightPurpose && CachedType && CachedClass )
+        if( RightPurpose && IsValidCachedType(i.Type) && CachedClass )
         {
             DNSCache_AddAItemToCache(&i, time(NULL), TtlContent);
         }
@@ -689,8 +698,10 @@ static int DNSCache_GetRawRecordsFromCache(__in    const char *Name,
 
         if( Node == NULL )
         {
+            DEBUG("Get cache: N\n");
             break;
         }
+        DEBUG("Get cache: Y\n");
 
         if( Node->TTL != 0 )
         {
@@ -724,6 +735,7 @@ static int DNSCache_GetRawRecordsFromCache(__in    const char *Name,
             Ret = iRet;
         }
     } while ( TRUE );
+    DEBUG("Get cache: %d\n", Ret);
 
     return Ret;
 }
@@ -787,13 +799,7 @@ static int DNSCache_GetByQuestion(__inout DnsGenerator *g,
         return -2;
     }
 
-    if( i.Klass != DNS_CLASS_IN ||
-        (i.Type != DNS_TYPE_CNAME &&
-            i.Type != DNS_TYPE_A &&
-            i.Type != DNS_TYPE_AAAA &&
-            i.Type != DNS_TYPE_HTTPS
-            )
-        )
+    if( i.Klass != DNS_CLASS_IN || !IsValidCachedType(i.Type) )
     {
         return -4;
     }

@@ -74,6 +74,13 @@ struct _DnsGenerator {
                  int Ttl
                  );
 
+    int (*MX)(DnsGenerator *g,
+              const char *Name,
+              int Preference,
+              const char *Server,
+              int Ttl
+              );
+
     int (*A)(DnsGenerator *g,
              const char *Name,
              const char *ip,

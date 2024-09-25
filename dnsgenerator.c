@@ -140,6 +140,7 @@ static DnsRecordPurpose DnsGenerator_NextPurpose(DnsGenerator *g)
 }
 
 #define LEFT_LENGTH(g_ptr)  ((g_ptr)->BufferLength - ((g_ptr)->Itr - (g_ptr)->Buffer))
+/* Is not compressed */
 #define LABEL_LENGTH(name)  (*(name) == '\0' ? 1 : strlen(name) + 2)
 
 static int DnsGenerator_NamePart(DnsGenerator *g, const char *Name)
@@ -311,6 +312,65 @@ static int DnsGenerator_CName(DnsGenerator *g,
     if( DnsGenerator_NamePart(g, CName) != 0 )
     {
         return -6;
+    }
+
+    SET_16_BIT_U_INT(g->NumberOfRecords,
+                     GET_16_BIT_U_INT(g->NumberOfRecords) + 1
+                     );
+
+    return 0;
+}
+
+static int DnsGenerator_MX(DnsGenerator *g,
+                           const char *Name,
+                           int Preference,
+                           const char *Server,
+                           int Ttl
+                           )
+{
+    DnsRecordPurpose p = DnsGenerator_CurrentPurpose(g);
+
+    if( p != DNS_RECORD_PURPOSE_ANSWER &&
+        p != DNS_RECORD_PURPOSE_NAME_SERVER &&
+        p != DNS_RECORD_PURPOSE_ADDITIONAL
+        )
+    {
+        return 1;
+    }
+
+    if( DnsGenerator_NamePart(g, Name) != 0 )
+    {
+        return -1;
+    }
+
+    if( DnsGenerator_16Uint(g, DNS_TYPE_MX) != 0 )
+    {
+        return -2;
+    }
+
+    if( DnsGenerator_16Uint(g, DNS_CLASS_IN) != 0 )
+    {
+        return -3;
+    }
+
+    if( DnsGenerator_32Uint(g, Ttl) != 0 )
+    {
+        return -4;
+    }
+
+    if( DnsGenerator_16Uint(g, LABEL_LENGTH(Server) + 2) != 0 )
+    {
+        return -5;
+    }
+
+    if( DnsGenerator_16Uint(g, Preference) != 0 )
+    {
+        return -6;
+    }
+
+    if( DnsGenerator_NamePart(g, Server) != 0 )
+    {
+        return -7;
     }
 
     SET_16_BIT_U_INT(g->NumberOfRecords,
@@ -784,14 +844,21 @@ static int DnsGenerator_Generate(DnsGenerator *g,
 
     switch( Type )
     {
-    case DNS_TYPE_CNAME:
-        Ret = g->CName(g, Name, Data, Ttl);
-        break;
-
     case DNS_TYPE_A:
     case DNS_TYPE_AAAA:
     case DNS_TYPE_HTTPS:
+    case DNS_TYPE_TXT:
         Ret = g->RawData(g, Name, Type, Klass, Data, DataLength, Ttl);
+        break;
+
+    case DNS_TYPE_CNAME:
+    case DNS_TYPE_PTR:
+    case DNS_TYPE_NS:
+        Ret = g->CName(g, Name, Data, Ttl);
+        break;
+
+    case DNS_TYPE_MX:
+        Ret = g->MX(g, Name, GET_16_BIT_U_INT(Data), Data + 2, Ttl);
         break;
 
     default:
@@ -887,6 +954,7 @@ int DnsGenerator_Init(DnsGenerator *g,
 
     g->Question = DnsGenerator_Question;
     g->CName = DnsGenerator_CName;
+    g->MX = DnsGenerator_MX;
     g->A = DnsGenerator_A;
     g->AAAA = DnsGenerator_AAAA;
     g->EDns = DnsGenerator_EDns;

@@ -256,7 +256,6 @@ struct _DnsSimpleParserIterator{
                    char *Buffer, /* Could be NULL */
                    int BufferLength
                    );
-    int (*GetNameLength)(DnsSimpleParserIterator *i);
     char *(*RowData)(DnsSimpleParserIterator *i);
     int (*TextifyData)(DnsSimpleParserIterator *i,
                        const char *Format, /* "%t: %v\n" */
