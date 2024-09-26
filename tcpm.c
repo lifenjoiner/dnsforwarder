@@ -19,8 +19,6 @@ extern BOOL Ipv6_Enabled;
 #define TIMEOUT_ms_RECV 2000
 #define TIMEOUT_ms_ALIVE    100
 
-#define CONTEXT_DATA_LENGTH 2048
-
 extern int TCPM_Keep_Alive;
 static const struct timeval TimeOut_Const = {TIMEOUT, 0};
 
@@ -543,11 +541,11 @@ TcpM_Works(TcpM *m)
 {
     int Err;
 
-    char ReceiveBuffer[CONTEXT_DATA_LENGTH];
+    char ReceiveBuffer[SOCKET_CONTEXT_LENGTH];
     MsgContext *MsgCtx;
     IHeader *Header;
 
-    #define LEFT_LENGTH  (CONTEXT_DATA_LENGTH - sizeof(IHeader))
+    #define LEFT_LENGTH  (SOCKET_CONTEXT_LENGTH - sizeof(IHeader))
     char *Entity;
 
     SocketPuller *p = &(m->Puller);
@@ -589,7 +587,7 @@ TcpM_Works(TcpM *m)
 
             State = recvfrom(s,
                              ReceiveBuffer, /* Receiving a header */
-                             CONTEXT_DATA_LENGTH,
+                             SOCKET_CONTEXT_LENGTH,
                              0,
                              NULL,
                              NULL
@@ -750,7 +748,7 @@ int TcpM_Init(TcpM *m, const char *Services, BOOL Parallel, const char *SocksPro
         return -7;
     }
 
-    if( ModuleContext_Init(&(m->Context), CONTEXT_DATA_LENGTH) != 0 )
+    if( ModuleContext_Init(&(m->Context), SOCKET_CONTEXT_LENGTH) != 0 )
     {
         return -12;
     }

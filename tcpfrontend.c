@@ -15,15 +15,13 @@ WINAPI
 #endif
 TcpFrontend_Work(void *Unused)
 {
-    /* Buffer */
-    #define BUF_LENGTH  2048
     char *ReceiveBuffer;
     IHeader *Header;
 
-    #define LEFT_LENGTH  (BUF_LENGTH - sizeof(IHeader))
+    #define LEFT_LENGTH  (SOCKET_CONTEXT_LENGTH - sizeof(IHeader))
     char *Entity;
 
-    ReceiveBuffer = SafeMalloc(BUF_LENGTH);
+    ReceiveBuffer = SafeMalloc(SOCKET_CONTEXT_LENGTH);
     if( ReceiveBuffer == NULL )
     {
         ERRORMSG("No enough memory, 26.\n");
@@ -103,7 +101,7 @@ TcpFrontend_Work(void *Unused)
                                  Agent
                                  );
 
-                    MMgr_Send(ReceiveBuffer, BUF_LENGTH);
+                    MMgr_Send(ReceiveBuffer, SOCKET_CONTEXT_LENGTH);
 
                     if( IsNewConnected )
                     {

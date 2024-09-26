@@ -37,13 +37,13 @@ struct _IHeader{
 
 /* The **variable** context item structure:
 
-#define CONTEXT_DATA_LENGTH 2048
-
 struct _MsgContext{
     IHeader h;
-    char    Entity[CONTEXT_DATA_LENGTH - sizeof(IHeader)];
+    char    Entity[SOCKET_CONTEXT_LENGTH - sizeof(IHeader)];
 };
 */
+
+#define SOCKET_CONTEXT_LENGTH   4096
 
 #define IHEADER_TAIL(ptr)   (void *)((IHeader *)(ptr) + 1)
 

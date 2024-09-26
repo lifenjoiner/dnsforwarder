@@ -7,8 +7,6 @@
 #include "domainstatistic.h"
 #include "mmgr.h"
 
-#define CONTEXT_DATA_LENGTH  2048
-
 extern BOOL Ipv6_Enabled;
 
 static BOOL BlockIpv6WhenIpv4Exists = FALSE;
@@ -134,14 +132,14 @@ Hosts_SocketLoop(void *Unused)
 
     struct timeval  TimeLimit = LongTime;
 
-    #define LEFT_LENGTH_SL (CONTEXT_DATA_LENGTH - sizeof(IHeader))
+    #define LEFT_LENGTH_SL (SOCKET_CONTEXT_LENGTH - sizeof(IHeader))
 
-    char    InnerBuffer[CONTEXT_DATA_LENGTH];
+    char    InnerBuffer[SOCKET_CONTEXT_LENGTH];
     MsgContext *InnerMsgCtx = (MsgContext *)InnerBuffer;
     IHeader *InnerHeader = (IHeader *)InnerBuffer;
     /* char    *InnerEntity = InnerBuffer + sizeof(IHeader); */
 
-    char OuterBuffer[CONTEXT_DATA_LENGTH];
+    char OuterBuffer[SOCKET_CONTEXT_LENGTH];
     /* MsgContext *OuterMsgCtx = (MsgContext *)OuterBuffer; */
     IHeader *OuterHeader = (IHeader *)OuterBuffer;
     char    *OuterEntity = OuterBuffer + sizeof(IHeader);
@@ -165,7 +163,7 @@ Hosts_SocketLoop(void *Unused)
     Puller.Add(&Puller, InnerSocket, NULL, 0);
     Puller.Add(&Puller, OuterSocket, NULL, 0);
 
-    if( ModuleContext_Init(&Context, CONTEXT_DATA_LENGTH) != 0 )
+    if( ModuleContext_Init(&Context, SOCKET_CONTEXT_LENGTH) != 0 )
     {
         ret = -431;
         goto EXIT_1;
@@ -219,7 +217,7 @@ Hosts_SocketLoop(void *Unused)
             NewIdentifier = rand();
 
             if( HostsUtils_GenerateQuery(OuterBuffer,
-                                         CONTEXT_DATA_LENGTH,
+                                         SOCKET_CONTEXT_LENGTH,
                                          OuterSocket,
                                          &OuterAddress,
                                          MsgContext_IsFromTCP(InnerMsgCtx),
@@ -242,7 +240,7 @@ Hosts_SocketLoop(void *Unused)
 
             OuterHeader->Parent = (IHeader *)MsgCtxStored;
 
-            MMgr_Send(OuterBuffer, CONTEXT_DATA_LENGTH);
+            MMgr_Send(OuterBuffer, SOCKET_CONTEXT_LENGTH);
 
         } else if( Pulled == OuterSocket )
         {
@@ -274,7 +272,7 @@ Hosts_SocketLoop(void *Unused)
             }
 
             if( HostsUtils_CombineRecursedResponse((MsgContext *)InnerBuffer,
-                                                   CONTEXT_DATA_LENGTH,
+                                                   SOCKET_CONTEXT_LENGTH,
                                                    OuterEntity,
                                                    State,
                                                    OuterHeader->Domain

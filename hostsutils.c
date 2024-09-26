@@ -3,8 +3,6 @@
 #include "dnsgenerator.h"
 #include "goodiplist.h"
 
-#define CONTEXT_DATA_LENGTH 2048
-
 static int HostsUtils_GetCName_Callback(int Number,
                                         HostsRecordType Type,
                                         const char *Data,
