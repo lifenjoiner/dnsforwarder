@@ -3,6 +3,9 @@
 #include "cacheht.h"
 #include "common.h"
 #include "utils.h"
+#include "logs.h"
+
+static int32_t  FreeNodeCount = 0;
 
 typedef struct _Cht_Slot{
     int32_t Next;
@@ -81,22 +84,25 @@ static int CacheHT_CreateNewNode(CacheHT *h, uint32_t ChunkSize, Cht_Node **Out,
 }
 
 int32_t CacheHT_FindUnusedNode(CacheHT      *h,
-                                uint32_t    ChunkSize,
-                                Cht_Node    **Out,
-                                void        *Boundary,
-                                BOOL        *NewCreated
-                                )
+                               uint32_t     ChunkSize,
+                               Cht_Node     **Out,
+                               void         *Boundary,
+                               BOOL         *NewCreated
+                               )
 {
     int32_t Subscript = h->FreeList;
     Cht_Node    *FirstNode = NULL;
     Cht_Node    *SecondNode = NULL;
+    int count = 0;
 
     const Array *NodeChunk = &(h->NodeChunk);
 
+    DEBUG("CacheHT free nodes: %d\n", FreeNodeCount);
     while ( Subscript >= 0 )
     {
         FirstNode = SecondNode;
         SecondNode = (Cht_Node *)Array_GetBySubscript(NodeChunk, Subscript);
+        ++count;
         if( SecondNode->Length == ChunkSize )
         {
             if( FirstNode == NULL )
@@ -115,6 +121,8 @@ int32_t CacheHT_FindUnusedNode(CacheHT      *h,
             }
 
             *NewCreated = FALSE;
+            --FreeNodeCount;
+            DEBUG("CacheHT free node reused: %d\n", count);
 
             return Subscript;
         }
@@ -158,7 +166,7 @@ int CacheHT_InsertToSlot(CacheHT    *h,
     return 0;
 }
 
-static Cht_Node *CacheHT_FindPredecesor(CacheHT *h, const Cht_Slot *Slot, int32_t SubScriptOfNode)
+static Cht_Node *CacheHT_FindPredecessor(CacheHT *h, const Cht_Slot *Slot, int32_t SubScriptOfNode)
 {
     int Next = Slot->Next;
     Cht_Node *Node;
@@ -186,7 +194,7 @@ int CacheHT_RemoveFromSlot(CacheHT *h, int32_t SubScriptOfNode, Cht_Node *Node)
 {
     Array       *NodeChunk = &(h->NodeChunk);
     Cht_Slot    *Slot;
-    Cht_Node    *Predecesor;
+    Cht_Node    *Predecessor;
 
     if( Node->Slot < 0 )
     {
@@ -199,12 +207,12 @@ int CacheHT_RemoveFromSlot(CacheHT *h, int32_t SubScriptOfNode, Cht_Node *Node)
         return -1;
     }
 
-    Predecesor = CacheHT_FindPredecesor(h, Slot, SubScriptOfNode);
-    if( Predecesor == NULL )
+    Predecessor = CacheHT_FindPredecessor(h, Slot, SubScriptOfNode);
+    if( Predecessor == NULL )
     {
         Slot->Next = Node->Next;
     } else {
-        Predecesor->Next = Node->Next;
+        Predecessor->Next = Node->Next;
     }
 
     /* If this node is not the last one of NodeChunk, add it into free list,
@@ -215,6 +223,7 @@ int CacheHT_RemoveFromSlot(CacheHT *h, int32_t SubScriptOfNode, Cht_Node *Node)
         Node->Next = h->FreeList;
         h->FreeList = SubScriptOfNode;
         Node->Slot = -1;
+        ++FreeNodeCount;
     } else {
         --(NodeChunk->Used);
     }

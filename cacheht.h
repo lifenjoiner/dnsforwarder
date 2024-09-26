@@ -25,11 +25,11 @@ int CacheHT_Init(CacheHT *h, char *BaseAddr, int CacheSize);
 int CacheHT_ReInit(CacheHT *h, char *BaseAddr, int CacheSize);
 
 int32_t CacheHT_FindUnusedNode(CacheHT      *h,
-                                uint32_t    ChunkSize,
-                                Cht_Node    **Out,
-                                void        *Boundary,
-                                BOOL        *NewCreated
-                                );
+                               uint32_t    ChunkSize,
+                               Cht_Node    **Out,
+                               void        *Boundary,
+                               BOOL        *NewCreated
+                               );
 
 int CacheHT_InsertToSlot(CacheHT    *h,
                          const char *Key,

@@ -16,6 +16,16 @@
 #define CACHE_END   '\x0A'
 #define CACHE_START '\xFF'
 
+/*  Headroom Vs Sharing-Ratio
+    Average domain name length, top 10k: 8, 1M: 10;
+    IPv4: 4; IPv6: 16.
+    (1 + ({10} + 1) + (2 + 1) + (1 + 1)) + [4, 16] = 17 + [4, 16] = [21, 33]
+    8: [[24-3, 32-11], [40-7, 48-15]]
+    16: [[32-11], [48-15]]
+    32: [[32-11], [64-31]]
+ */
+#define CACHE_ROUND_UP(v)   ROUND_UP(v, 16)
+
 static BOOL             Inited = FALSE;
 static BOOL             CacheParallel = FALSE;
 
@@ -253,7 +263,7 @@ int DNSCache_Init(ConfigFileInfo *ConfigInfo)
         }
     }
 
-    CacheSize = ROUND_UP(_CacheSize, 8);
+    CacheSize = CACHE_ROUND_UP(_CacheSize);
 
     if( CacheSize < 102400 )
     {
@@ -373,7 +383,7 @@ static int32_t DNSCache_GetAvailableChunk(uint32_t Length, Cht_Node **Out)
 {
     int32_t NodeNumber;
     Cht_Node    *Node;
-    uint32_t    RoundedLength = ROUND_UP(Length, 4);
+    uint32_t    RoundedLength = CACHE_ROUND_UP(Length);
 
     BOOL    NewCreated;
 
@@ -384,6 +394,7 @@ static int32_t DNSCache_GetAvailableChunk(uint32_t Length, Cht_Node **Out)
         {
             Node->Offset = (*CacheEnd);
             (*CacheEnd) += RoundedLength;
+            DEBUG("DNSCache new node\n");
         }
 
         memset(MapStart + Node->Offset + Length, 0xFE, RoundedLength - Length);
@@ -606,6 +617,7 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
             CacheHT_InsertToSlot(CacheInfo, Item, Subscript, Node, NULL);
 
             ++(*CacheCount);
+            DEBUG("DNSCache count: %d, entries: %d\n", *CacheCount, ((struct _Header *)MapStart)->ht.NodeChunk.Used);
         } else {
             WARNING("No available cache: %s\n", Item);
             return -1;
