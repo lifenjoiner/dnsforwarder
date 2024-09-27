@@ -14,10 +14,15 @@ typedef struct _Cht_Node{
     uint32_t    UsedLength;
 } Cht_Node;
 
+typedef struct _Cht_2DList{
+    int32_t KeyNext;
+    int32_t ValNext;
+} Cht_2DList;
+
 typedef struct _HashTable{
     Array   NodeChunk;
     Array   Slots;
-    int32_t FreeList;
+    int32_t Free2DList;
 }CacheHT;
 
 int CacheHT_Init(CacheHT *h, char *BaseAddr, int CacheSize);

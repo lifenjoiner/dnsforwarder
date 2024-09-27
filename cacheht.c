@@ -43,7 +43,7 @@ int CacheHT_Init(CacheHT *h, char *BaseAddr, int CacheSize)
     h->NodeChunk.Used = 0;
     h->NodeChunk.Allocated = -1;
 
-    h->FreeList = -1;
+    h->Free2DList = -1;
 
     return 0;
 }
@@ -90,44 +90,59 @@ int32_t CacheHT_FindUnusedNode(CacheHT      *h,
                                BOOL         *NewCreated
                                )
 {
-    int32_t Subscript = h->FreeList;
-    Cht_Node    *FirstNode = NULL;
-    Cht_Node    *SecondNode = NULL;
+    int32_t Subscript = h->Free2DList;
+    Cht_2DList  *PreHead = NULL;
+    Cht_2DList  *CurHead = NULL;
+    Cht_Node    *CurNode = NULL;
     int count = 0;
 
     const Array *NodeChunk = &(h->NodeChunk);
 
-    DEBUG("CacheHT free nodes: %d\n", FreeNodeCount);
-    while ( Subscript >= 0 )
+    DEBUG("CacheHT free nodes: %d, start: %d, desire: %dB\n", FreeNodeCount, Subscript, ChunkSize);
+
+    while( Subscript >= 0 )
     {
-        FirstNode = SecondNode;
-        SecondNode = (Cht_Node *)Array_GetBySubscript(NodeChunk, Subscript);
+        PreHead = CurHead;
+        CurNode = (Cht_Node *)Array_GetBySubscript(NodeChunk, Subscript);
+        CurHead = (Cht_2DList *)CurNode;
         ++count;
-        if( SecondNode->Length == ChunkSize )
+        if( CurNode->Length == ChunkSize )
         {
-            if( FirstNode == NULL )
+            int32_t HeirSubscript;
+            if( CurHead->ValNext >= 0 )
             {
-                h->FreeList = SecondNode->Next;
+                Cht_2DList  *HeirHead;
+                HeirSubscript = CurHead->ValNext;
+                HeirHead = (Cht_2DList *)Array_GetBySubscript(NodeChunk, CurHead->ValNext);
+                HeirHead->KeyNext = CurHead->KeyNext;
             } else {
-                FirstNode->Next = SecondNode->Next;
+                HeirSubscript = CurHead->KeyNext;
             }
 
-            SecondNode->UsedLength = 0;
-            SecondNode->Next = -1;
+            if( PreHead == NULL )
+            {
+                h->Free2DList = HeirSubscript;
+            } else {
+                PreHead->KeyNext = HeirSubscript;
+            }
+
+            CurNode->UsedLength = 0;
+            CurNode->Next = -1;
 
             if( Out != NULL )
             {
-                *Out = SecondNode;
+                *Out = CurNode;
             }
 
             *NewCreated = FALSE;
             --FreeNodeCount;
-            DEBUG("CacheHT free node reused: %d\n", count);
+
+            DEBUG("CacheHT free node: %d\n", count);
 
             return Subscript;
         }
 
-        Subscript = SecondNode->Next;
+        Subscript = CurHead->KeyNext;
     }
 
     *NewCreated = TRUE;
@@ -190,6 +205,87 @@ static Cht_Node *CacheHT_FindPredecessor(CacheHT *h, const Cht_Slot *Slot, int32
     return NULL;
 }
 
+/*  PreHead --> (NewHead [+ CurHead]) --> NextHead
+    NewHead --> CurHead
+ */
+static int CacheHT_AddTo2DList(CacheHT *h, int32_t SubScriptOfNode, Cht_Node *Node)
+{
+    int32_t Subscript = h->Free2DList;
+    Cht_2DList  *PreHead = NULL;
+    Cht_2DList  *CurHead = NULL;
+    Cht_2DList  *NewHead = (Cht_2DList *)Node;
+    Cht_Node    *CurNode = NULL;
+
+    const Array *NodeChunk = &(h->NodeChunk);
+
+    while( Subscript >= 0 )
+    {
+        PreHead = CurHead;
+        CurNode = (Cht_Node *)Array_GetBySubscript(NodeChunk, Subscript);
+        CurHead = (Cht_2DList *)CurNode;
+        if( CurNode->Length == Node->Length )
+        {
+            break;
+        }
+
+        Subscript = CurHead->KeyNext;
+    }
+
+#if 1
+    if( Subscript == -1 )
+    {
+        /* New, as head */
+        NewHead->KeyNext = h->Free2DList;
+        h->Free2DList = SubScriptOfNode;
+    } else if( PreHead == NULL ) {
+        /* To be the head of the existing head */
+        NewHead->KeyNext = CurHead->KeyNext;
+        h->Free2DList = SubScriptOfNode;
+    } else {
+        /* To be the head of the existing non-head */
+        NewHead->KeyNext = CurHead->KeyNext;
+        PreHead->KeyNext = SubScriptOfNode;
+    }
+
+#else
+    if( Subscript == -1 )
+    {
+        /* New, as tail */
+        NewHead->KeyNext = -1;
+        if( CurHead == NULL )
+        {
+            /* head */
+            h->Free2DList = SubScriptOfNode;
+        } else {
+            CurHead->KeyNext = SubScriptOfNode;
+        }
+    } else {
+        /* To be the head of the existing */
+        NewHead->KeyNext = CurHead->KeyNext;
+        if( PreHead == NULL )
+        {
+            /* head */
+            h->Free2DList = SubScriptOfNode;
+        } else {
+            PreHead->KeyNext = SubScriptOfNode;
+        }
+    }
+#endif
+
+    NewHead->ValNext = Subscript;
+
+#if 0
+    DEBUG("CacheHT AddTo2DList: Free2DList=%d, PreKeyNext=%d, NewHead->KeyNext=%d, NewHead->ValNext=%d, Length=%d\n",
+          h->Free2DList,
+          SubScriptOfNode,
+          NewHead->KeyNext,
+          NewHead->ValNext,
+          Node->Length);
+#endif
+
+    return 0;
+}
+
 int CacheHT_RemoveFromSlot(CacheHT *h, int32_t SubScriptOfNode, Cht_Node *Node)
 {
     Array       *NodeChunk = &(h->NodeChunk);
@@ -220,9 +316,7 @@ int CacheHT_RemoveFromSlot(CacheHT *h, int32_t SubScriptOfNode, Cht_Node *Node)
      */
     if( SubScriptOfNode != NodeChunk->Used - 1 )
     {
-        Node->Next = h->FreeList;
-        h->FreeList = SubScriptOfNode;
-        Node->Slot = -1;
+        CacheHT_AddTo2DList(h, SubScriptOfNode, Node);
         ++FreeNodeCount;
     } else {
         --(NodeChunk->Used);
@@ -272,5 +366,5 @@ void CacheHT_Free(CacheHT *h)
 {
     Array_Free(&(h->NodeChunk));
     Array_Free(&(h->Slots));
-    h->FreeList = -1;
+    h->Free2DList = -1;
 }
