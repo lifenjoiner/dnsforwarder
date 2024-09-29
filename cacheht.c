@@ -5,6 +5,9 @@
 #include "utils.h"
 #include "logs.h"
 
+#define USED_GRADIENT   5   /* for rate diff */
+#define IDLE_TIME_SEC   59  /* same as sweepping */
+
 static int32_t  FreeNodeCount = 0;
 
 typedef struct _Cht_Slot{
@@ -91,6 +94,8 @@ int32_t CacheHT_FindUnusedNode(CacheHT      *h,
                                )
 {
     int32_t Subscript = h->Free2DList;
+    int32_t PreSubscript = -1;
+    Cht_2DList  *GrandHead = NULL;
     Cht_2DList  *PreHead = NULL;
     Cht_2DList  *CurHead = NULL;
     Cht_Node    *CurNode = NULL;
@@ -98,32 +103,78 @@ int32_t CacheHT_FindUnusedNode(CacheHT      *h,
 
     const Array *NodeChunk = &(h->NodeChunk);
 
+    time_t Now = time(NULL);
+
     DEBUG("CacheHT free nodes: %d, start: %d, desire: %dB\n", FreeNodeCount, Subscript, ChunkSize);
 
     while( Subscript >= 0 )
     {
-        PreHead = CurHead;
         CurNode = (Cht_Node *)Array_GetBySubscript(NodeChunk, Subscript);
         CurHead = (Cht_2DList *)CurNode;
         ++count;
+
+        if( PreHead != NULL &&
+            PreHead->Count > CurHead->Count &&
+            PreHead->TimeAdded - CurHead->TimeAdded >= IDLE_TIME_SEC
+            )
+        {
+            PreHead->Count = CurHead->Count;
+            PreHead->TimeAdded = Now;
+        }
+        /* Worst case: one of the most used types is consumed, then rejoins. */
+
         if( CurNode->Length == ChunkSize )
         {
             int32_t HeirSubscript;
+
+            CurHead->TimeAdded = Now;
+            CurHead->Count++;
+
             if( CurHead->ValNext >= 0 )
             {
                 Cht_2DList  *HeirHead;
                 HeirSubscript = CurHead->ValNext;
-                HeirHead = (Cht_2DList *)Array_GetBySubscript(NodeChunk, CurHead->ValNext);
+                HeirHead = (Cht_2DList *)Array_GetBySubscript(NodeChunk, HeirSubscript);
                 HeirHead->KeyNext = CurHead->KeyNext;
+                HeirHead->TimeAdded = CurHead->TimeAdded;
+                HeirHead->Count = CurHead->Count;
+
+                if( PreHead == NULL )
+                {
+                    h->Free2DList = HeirSubscript;
+
+                } else if( HeirHead->Count - PreHead->Count < USED_GRADIENT ) {
+                    PreHead->KeyNext = HeirSubscript;
+
+                } else {
+                    /* Move ahead */
+#ifdef DEV_DEBUG
+                    DEBUG("CacheHT free 2D list Pop: %d, Swap: %d: %d <=> %d: %d\n",
+                          Subscript,
+                          PreSubscript,
+                          PreHead->Count,
+                          HeirSubscript,
+                          HeirHead->Count
+                          );
+#endif
+                    PreHead->KeyNext = HeirHead->KeyNext;
+                    HeirHead->KeyNext = PreSubscript;
+                    if( GrandHead == NULL )
+                    {
+                        h->Free2DList = HeirSubscript;
+                    } else {
+                        GrandHead->KeyNext = HeirSubscript;
+                    }
+                }
+
             } else {
                 HeirSubscript = CurHead->KeyNext;
-            }
-
-            if( PreHead == NULL )
-            {
-                h->Free2DList = HeirSubscript;
-            } else {
-                PreHead->KeyNext = HeirSubscript;
+                if( PreHead == NULL )
+                {
+                    h->Free2DList = HeirSubscript;
+                } else {
+                    PreHead->KeyNext = HeirSubscript;
+                }
             }
 
             CurNode->UsedLength = 0;
@@ -137,13 +188,18 @@ int32_t CacheHT_FindUnusedNode(CacheHT      *h,
             *NewCreated = FALSE;
             --FreeNodeCount;
 
-            DEBUG("CacheHT free node: %d\n", count);
+            DEBUG("CacheHT free node idx: %d\n", count);
 
             return Subscript;
         }
 
+        GrandHead = PreHead;
+        PreHead = CurHead;
+        PreSubscript = Subscript;
         Subscript = CurHead->KeyNext;
     }
+
+    DEBUG("CacheHT new node, groups: %d\n", count);
 
     *NewCreated = TRUE;
     return CacheHT_CreateNewNode(h, ChunkSize, Out, Boundary);
@@ -225,6 +281,8 @@ static int CacheHT_AddTo2DList(CacheHT *h, int32_t SubScriptOfNode, Cht_Node *No
         CurHead = (Cht_2DList *)CurNode;
         if( CurNode->Length == Node->Length )
         {
+            NewHead->KeyNext = CurHead->KeyNext;
+            NewHead->Count = CurHead->Count;
             break;
         }
 
@@ -236,14 +294,13 @@ static int CacheHT_AddTo2DList(CacheHT *h, int32_t SubScriptOfNode, Cht_Node *No
     {
         /* New, as head */
         NewHead->KeyNext = h->Free2DList;
+        NewHead->Count = 0;
         h->Free2DList = SubScriptOfNode;
     } else if( PreHead == NULL ) {
         /* To be the head of the existing head */
-        NewHead->KeyNext = CurHead->KeyNext;
         h->Free2DList = SubScriptOfNode;
     } else {
         /* To be the head of the existing non-head */
-        NewHead->KeyNext = CurHead->KeyNext;
         PreHead->KeyNext = SubScriptOfNode;
     }
 
@@ -252,6 +309,7 @@ static int CacheHT_AddTo2DList(CacheHT *h, int32_t SubScriptOfNode, Cht_Node *No
     {
         /* New, as tail */
         NewHead->KeyNext = -1;
+        NewHead->Count = 0;
         if( CurHead == NULL )
         {
             /* head */
@@ -261,7 +319,6 @@ static int CacheHT_AddTo2DList(CacheHT *h, int32_t SubScriptOfNode, Cht_Node *No
         }
     } else {
         /* To be the head of the existing */
-        NewHead->KeyNext = CurHead->KeyNext;
         if( PreHead == NULL )
         {
             /* head */
@@ -274,7 +331,7 @@ static int CacheHT_AddTo2DList(CacheHT *h, int32_t SubScriptOfNode, Cht_Node *No
 
     NewHead->ValNext = Subscript;
 
-#if 0
+#ifdef DEV_DEBUG
     DEBUG("CacheHT AddTo2DList: Free2DList=%d, PreKeyNext=%d, NewHead->KeyNext=%d, NewHead->ValNext=%d, Length=%d\n",
           h->Free2DList,
           SubScriptOfNode,

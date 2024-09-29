@@ -15,8 +15,13 @@ typedef struct _Cht_Node{
 } Cht_Node;
 
 typedef struct _Cht_2DList{
-    int32_t KeyNext;
-    int32_t ValNext;
+    int32_t     KeyNext;
+    int32_t     ValNext;
+    int32_t     ReservedOffset;
+    int32_t     ReservedTTL;    /* for sweepping thread */
+    time_t      TimeAdded;
+    uint32_t    ReservedLength;
+    int32_t     Count;
 } Cht_2DList;
 
 typedef struct _HashTable{

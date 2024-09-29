@@ -394,7 +394,6 @@ static int32_t DNSCache_GetAvailableChunk(uint32_t Length, Cht_Node **Out)
         {
             Node->Offset = (*CacheEnd);
             (*CacheEnd) += RoundedLength;
-            DEBUG("DNSCache new node\n");
         }
 
         memset(MapStart + Node->Offset + Length, 0xFE, RoundedLength - Length);
@@ -617,7 +616,11 @@ static int DNSCache_AddAItemToCache(DnsSimpleParserIterator *i,
             CacheHT_InsertToSlot(CacheInfo, Item, Subscript, Node, NULL);
 
             ++(*CacheCount);
-            DEBUG("DNSCache count: %d, entries: %d\n", *CacheCount, ((struct _Header *)MapStart)->ht.NodeChunk.Used);
+            DEBUG("DNSCache count: %d, entries: %d, cid: %d\n",
+                  *CacheCount,
+                  ((struct _Header *)MapStart)->ht.NodeChunk.Used,
+                  Subscript
+                  );
         } else {
             WARNING("No available cache: %s\n", Item);
             return -1;
