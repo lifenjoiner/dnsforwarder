@@ -22,10 +22,10 @@ static void SweepWorks(MsgContext *MsgCtx, int Number, UdpM *Module)
     }
 }
 
-static int SwepTask(UdpM *m, SwepCallback cb)
+static int SweepTask(UdpM *m, SweepCallback cb)
 {
     EFFECTIVE_LOCK_GET(m->Lock);
-    m->Context.Swep(&(m->Context), cb, m);
+    m->Context.Sweep(&(m->Context), cb, m);
     EFFECTIVE_LOCK_RELEASE(m->Lock);
 
     return 0;
@@ -35,18 +35,18 @@ static int
 #ifdef _WIN32
 WINAPI
 #endif
-UdpM_Swep_Thread(UdpM *m)
+UdpM_Sweep_Thread(UdpM *m)
 {
     while( m->IsServer || m->WorkThread != NULL_THREAD)
     {
-        SwepTask(m, (SwepCallback)SweepWorks);
+        SweepTask(m, (SweepCallback)SweepWorks);
         SLEEP(10000);
     }
 
     ModuleContext_Free(&(m->Context));
     EFFECTIVE_LOCK_DESTROY(m->Lock);
 
-    m->SwepThread = NULL_THREAD;
+    m->SweepThread = NULL_THREAD;
 
     return 0;
 }
@@ -410,8 +410,8 @@ int UdpM_Init(UdpM *m, const char *Services, BOOL Parallel)
 
     CREATE_THREAD(UdpM_Works, m, m->WorkThread);
     DETACH_THREAD(m->WorkThread);
-    CREATE_THREAD(UdpM_Swep_Thread, m, m->SwepThread);
-    DETACH_THREAD(m->SwepThread);
+    CREATE_THREAD(UdpM_Sweep_Thread, m, m->SweepThread);
+    DETACH_THREAD(m->SweepThread);
 
     return 0;
 

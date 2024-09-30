@@ -185,7 +185,7 @@ Hosts_SocketLoop(void *Unused)
                 break;
             }
             TimeLimit = LongTime;
-            Context.Swep(&Context, NULL, NULL);
+            Context.Sweep(&Context, NULL, NULL);
         } else if( Pulled == InnerSocket )
         {
             /* Recursive query */

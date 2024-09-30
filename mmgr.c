@@ -606,7 +606,7 @@ Modules_SafeCleanup(ModuleMap *ModuleMap)
                 {
                     M->ModuleUnion.Udp.IsServer = 0;
                     InUse |= M->ModuleUnion.Udp.WorkThread != NULL_THREAD;
-                    InUse |= M->ModuleUnion.Udp.SwepThread != NULL_THREAD;
+                    InUse |= M->ModuleUnion.Udp.SweepThread != NULL_THREAD;
                 }
                 else if( strcmp(M->ModuleName, "TCP") == 0 )
                 {

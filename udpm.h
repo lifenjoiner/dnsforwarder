@@ -16,7 +16,7 @@ struct _UdpM {
     EFFECTIVE_LOCK  Lock;
 
     ThreadHandle    WorkThread;
-    ThreadHandle    SwepThread;
+    ThreadHandle    SweepThread;
 
     int IsServer;
 

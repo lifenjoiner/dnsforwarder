@@ -3,10 +3,10 @@
 #include "mcontext.h"
 #include "common.h"
 
-static int ModuleContext_Swep_Collect(Bst *t,
-                                      const MsgContext *Context,
-                                      Array *Pending
-                                      )
+static int ModuleContext_Sweep_Collect(Bst *t,
+                                       const MsgContext *Context,
+                                       Array *Pending
+                                       )
 {
     if( time(NULL) - ((IHeader *)Context)->Timestamp > 2 )
     {
@@ -16,7 +16,7 @@ static int ModuleContext_Swep_Collect(Bst *t,
     return 0;
 }
 
-static void ModuleContext_Swep(ModuleContext *c, SwepCallback cb, void *Arg)
+static void ModuleContext_Sweep(ModuleContext *c, SweepCallback cb, void *Arg)
 {
     Array Pending;
     int i;
@@ -34,7 +34,7 @@ static void ModuleContext_Swep(ModuleContext *c, SwepCallback cb, void *Arg)
     }
 
     c->d.Enum(&(c->d),
-              (Bst_Enum_Callback)ModuleContext_Swep_Collect,
+              (Bst_Enum_Callback)ModuleContext_Sweep_Collect,
               &Pending
               );
 
@@ -81,9 +81,9 @@ static void ModuleContext_Del(ModuleContext *c, MsgContext *Input)
 }
 
 static int ModuleContext_GenAnswerHeaderAndRemove(ModuleContext *c,
-                                                   MsgContext *Input,
-                                                   MsgContext *Output
-                                                   )
+                                                  MsgContext *Input,
+                                                  MsgContext *Output
+                                                  )
 {
     IHeader *h1, *h2;
     const MsgContext *ri;
@@ -150,7 +150,7 @@ int ModuleContext_Init(ModuleContext *c, int ItemLength)
     c->Del = ModuleContext_Del;
     c->Find = ModuleContext_Find;
     c->GenAnswerHeaderAndRemove = ModuleContext_GenAnswerHeaderAndRemove;
-    c->Swep = ModuleContext_Swep;
+    c->Sweep = ModuleContext_Sweep;
 
     return 0;
 }

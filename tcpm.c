@@ -571,7 +571,7 @@ TcpM_Works(TcpM *m)
                 ERRORMSG("TcpM fatal error %d.\n", Err);
                 break;
             }
-            m->Context.Swep(&(m->Context), (SwepCallback)SweepWorks, m);
+            m->Context.Sweep(&(m->Context), (SweepCallback)SweepWorks, m);
             NumberOfCumulated = 0;
             continue;
         }
@@ -581,7 +581,7 @@ TcpM_Works(TcpM *m)
 
             if( NumberOfCumulated > 1024 )
             {
-                m->Context.Swep(&(m->Context), (SwepCallback)SweepWorks, m);
+                m->Context.Sweep(&(m->Context), (SweepCallback)SweepWorks, m);
                 NumberOfCumulated = 0;
             }
 
