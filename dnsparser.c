@@ -991,7 +991,6 @@ static int DNSRRGetString(const char *Data,
                           )
 {
     const char *DataItr = Data;
-    int DataLeft = DataLength;
 
     char *BufferItr = Buffer;
     int BufferLeft = BufferLength;
@@ -1008,7 +1007,6 @@ static int DNSRRGetString(const char *Data,
         memcpy(BufferItr, DataItr + 1, n);
 
         DataItr += 1 + n;
-        DataLeft -= (1 + n);
 
         BufferItr += n;
         BufferLeft -= n;
