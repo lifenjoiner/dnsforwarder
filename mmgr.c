@@ -280,6 +280,7 @@ static int Tcp_Init(ModuleMap *ModuleMap, StringListIterator *i)
 }
 
 /*
+#############################
 # UDP
 PROTOCOL UDP
 SERVER 1.2.4.8,127.0.0.1
@@ -309,6 +310,10 @@ PROXY 192.168.1.1:8080,192.168.1.1:8081
 
 example.com
 
+#############################
+# UDP and TCP use the same servers
+PROTOCOL *
+SERVER 1.2.4.8,127.0.0.1
 */
 static int Modules_InitFromFile(ModuleMap *ModuleMap, StringListIterator *i)
 {
@@ -325,6 +330,10 @@ static int Modules_InitFromFile(ModuleMap *ModuleMap, StringListIterator *i)
 
     const char *Protocol = NULL;
     const char *List = NULL;
+
+    BOOL UseUDP = FALSE;
+    BOOL UseTCP = FALSE;
+    BOOL UseANY = FALSE;
 
     int ret = 0;
 
@@ -458,7 +467,16 @@ static int Modules_InitFromFile(ModuleMap *ModuleMap, StringListIterator *i)
         goto EXIT_2;
     }
 
-    if( strcmp(Protocol, "udp") == 0 )
+    UseANY = strcmp(Protocol, "*") == 0;
+    if( UseANY )
+    {
+        UseUDP = TRUE;
+        UseTCP = TRUE;
+    } else {
+        UseUDP = strcmp(Protocol, "udp") == 0;
+    }
+
+    if( UseUDP )
     {
         const char *Services = NULL;
         const char *Parallel = "on";
@@ -472,7 +490,11 @@ static int Modules_InitFromFile(ModuleMap *ModuleMap, StringListIterator *i)
             ret = -337;
         }
 
-    } else if( strcmp(Protocol, "tcp") == 0 )
+    } else {
+        UseTCP = strcmp(Protocol, "tcp") == 0;
+    }
+
+    if( UseTCP )
     {
         const char *Services = NULL;
         const char *Parallel = "on";
@@ -488,7 +510,7 @@ static int Modules_InitFromFile(ModuleMap *ModuleMap, StringListIterator *i)
             ret = -233;
         }
 
-    } else {
+    } else if( !UseUDP ) {
         ERRORMSG("Unknown protocol %s, file \"%s\".\n", Protocol, File);
         ret = -281;
     }
