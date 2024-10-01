@@ -777,18 +777,26 @@ static Cht_Node *DNSCache_GetCNameFromCache(__in char *Name,
 
     do
     {
-        Node = DNSCache_FindFromCache(Name_Type_Class,
-                                      KeyLength + 1,
-                                      Node,
-                                      CurrentTime
-                                      );
-        if( Node == NULL )
+        Cht_Node *iNode = DNSCache_FindFromCache(Name_Type_Class,
+                                                 KeyLength + 1,
+                                                 Node,
+                                                 CurrentTime
+                                                 );
+        if( Node != NULL ) {
+            if( iNode != NULL )
+            {
+                WARNING("1+ CNAME chains: %s\n", Name);
+            }
+            return Node;
+        }
+
+        if( iNode == NULL )
         {
             return NULL;
         }
 
+        Node = iNode;
         strcpy(Buffer, MapStart + Node->Offset + 1 + strlen(Name_Type_Class) + 1);
-        return Node;
 
     } while( TRUE );
 
