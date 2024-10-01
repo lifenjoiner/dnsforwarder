@@ -50,7 +50,9 @@ OBJDIR_RELEASE = .\\obj\\Release$(ARCH_EXT)
 BINDIR_RELEASE = .\\bin\\Release$(ARCH_EXT)
 OUT_RELEASE = $(BINDIR_RELEASE)\\dnsforwarder.exe
 
-SOURCES = \
+SOURCES_APP = main.c
+
+SOURCES_LIB = \
 	addresslist.c \
 	addresslist.h \
 	array.c \
@@ -96,7 +98,6 @@ SOURCES = \
 	linkedqueue.h \
 	logs.c \
 	logs.h \
-	main.c \
 	mcontext.c \
 	mcontext.h \
 	mmgr.c \
@@ -140,17 +141,20 @@ SOURCES = \
 	winmsgque.c \
 	winmsgque.h
 
-OBJECTS = $(patsubst %.c,%.o,$(filter %.c,$(SOURCES)))
+OBJECTS_APP = $(patsubst %.c,%.o,$(filter %.c,$(SOURCES_APP)))
+OBJECTS_LIB = $(patsubst %.c,%.o,$(filter %.c,$(SOURCES_LIB)))
 
-OBJ_DEBUG = $(patsubst %.o,$(OBJDIR_DEBUG)\\%.o,$(OBJECTS))
+OBJ_APP_DEBUG = $(patsubst %.o,$(OBJDIR_DEBUG)\\%.o,$(OBJECTS_APP))
+OBJ_LIB_DEBUG = $(patsubst %.o,$(OBJDIR_DEBUG)\\%.o,$(OBJECTS_LIB))
 
-OBJ_RELEASE = $(patsubst %.o,$(OBJDIR_RELEASE)\\%.o,$(OBJECTS))
+OBJ_APP_RELEASE = $(patsubst %.o,$(OBJDIR_RELEASE)\\%.o,$(OBJECTS_APP))
+OBJ_LIB_RELEASE = $(patsubst %.o,$(OBJDIR_RELEASE)\\%.o,$(OBJECTS_LIB))
 
 ### test
 OUT_TEST = $(patsubst ../test/%/main.c,test\\%\\main.exe,$(wildcard ../test/*/main.c)) # requires `/`
 BINDIR_TEST = $(patsubst test\\%\\main.exe,$(BINDIR_DEBUG)\\test\\%\\,$(OUT_TEST))
 OBJDIR_TEST = $(patsubst test\\%\\main.exe,$(OBJDIR_DEBUG)\\test\\%\\,$(OUT_TEST))
-LIB_A_DEBUG = $(filter-out .\\obj\\Debug\main.o,$(OBJ_DEBUG))
+LIB_A_DEBUG = $(filter-out .\\obj\\Debug\main.o,$(OBJ_LIB_DEBUG))
 
 ###
 .PHONY: before_debug clean_debug before_release clean_release
@@ -162,8 +166,10 @@ before_release:
 	cmd.exe $(CMD_OPT) "if not exist $(BINDIR_RELEASE) md $(BINDIR_RELEASE)"
 	cmd.exe $(CMD_OPT) "if not exist $(OBJDIR_RELEASE) md $(OBJDIR_RELEASE)"
 
-$(OUT_RELEASE): $(OBJ_RELEASE)
-	$(LD) $(LIBDIR_RELEASE) -o $(OUT_RELEASE) $(OBJ_RELEASE) $(LDFLAGS_RELEASE) $(LIB_RELEASE)
+$(OUT_RELEASE): $(OBJ_APP_RELEASE) $(OBJ_LIB_RELEASE)
+	$(LD) $(LIBDIR_RELEASE) -o $(OUT_RELEASE) $^ $(LDFLAGS_RELEASE) $(LIB_RELEASE)
+
+$(OBJ_APP_RELEASE): $(OBJ_LIB_RELEASE)
 
 $(OBJDIR_RELEASE)\\%.o: ..\\%.c
 	$(CC) $(CFLAGS_RELEASE) $(INC_RELEASE) -c $< -o $@
@@ -179,8 +185,10 @@ before_debug:
 	cmd.exe $(CMD_OPT) "if not exist $(BINDIR_DEBUG) md $(BINDIR_DEBUG)"
 	cmd.exe $(CMD_OPT) "if not exist $(OBJDIR_DEBUG) md $(OBJDIR_DEBUG)"
 
-$(OUT_DEBUG): $(OBJ_DEBUG)
-	$(LD) $(LIBDIR_DEBUG) -o $(OUT_DEBUG) $(OBJ_DEBUG) $(LDFLAGS_DEBUG) $(LIB_DEBUG)
+$(OUT_DEBUG): $(OBJ_APP_DEBUG) $(OBJ_LIB_DEBUG)
+	$(LD) $(LIBDIR_DEBUG) -o $(OUT_DEBUG) $^ $(LDFLAGS_DEBUG) $(LIB_DEBUG)
+
+$(OBJ_APP_DEBUG): $(OBJ_LIB_DEBUG)
 
 $(OBJDIR_DEBUG)\\%.o: ..\\%.c
 	$(CC) $(CFLAGS_DEBUG) $(INC_DEBUG) -c $< -o $@
