@@ -240,6 +240,8 @@ BOOL StringChunk_Match_OnlyWildCard_GetOne(StringChunk  *dl,
                                             )
 {
     Array           Matches;
+    Array           MatchesAny;
+    Array           *pm;
     Array           *wl;
 
     EntryForString *FoundEntry;
@@ -253,6 +255,12 @@ BOOL StringChunk_Match_OnlyWildCard_GetOne(StringChunk  *dl,
 
     if( Array_Init(&Matches, sizeof(void *), 4, FALSE, NULL) != 0 )
     {
+        return FALSE;
+    }
+
+    if( Array_Init(&MatchesAny, sizeof(void *), 4, FALSE, NULL) != 0 )
+    {
+        Array_Free(&Matches);
         return FALSE;
     }
 
@@ -270,18 +278,24 @@ BOOL StringChunk_Match_OnlyWildCard_GetOne(StringChunk  *dl,
                 {
                     continue;
                 }
-                Array_PushBack(&Matches, &(FoundEntry->Data), NULL);
+                Array_PushBack(strcmp(FoundString, "*") == 0 ? &MatchesAny : &Matches,
+                               &(FoundEntry->Data),
+                               NULL
+                               );
             }
         }
     }
 
-    srand(time(NULL));
-    if( Array_GetUsed(&Matches) > 0 )
+    pm = Array_GetUsed(&Matches) > 0 ? &Matches : &MatchesAny;
+
+    if( Array_GetUsed(pm) > 0 )
     {
-        *Data = *((void **)Array_GetBySubscript(&Matches, rand() % Array_GetUsed(&Matches)));
+        srand(time(NULL));
+        *Data = *((void **)Array_GetBySubscript(pm, rand() % Array_GetUsed(pm)));
     } else {
         *Data = NULL;
     }
+    Array_Free(&MatchesAny);
     Array_Free(&Matches);
 
     return *Data != NULL;
