@@ -30,11 +30,11 @@ int StringChunk_Add(StringChunk *dl,
                     int LengthOfAdditionalData
                     );
 
-int StringChunk_Add_Domain(StringChunk    *dl,
-                            const char    *Domain,
-                            const void    *AdditionalData,
-                            int            LengthOfAdditionalData /* The length will not be stored. */
-                            );
+int StringChunk_Add_Domain(StringChunk  *dl,
+                           const char   *Domain,
+                           const void   *AdditionalData,
+                           int          LengthOfAdditionalData /* The length will not be stored. */
+                           );
 
 /* NOTICE : Data address returned, not offset. */
 BOOL StringChunk_Match_NoWildCard(StringChunk       *dl,
@@ -53,52 +53,52 @@ BOOL StringChunk_Match_OnlyWildCard(StringChunk *dl,
                                     );
 
 BOOL StringChunk_Match_OnlyWildCard_GetOne(StringChunk  *dl,
-                                            const char  *Str,
-                                            void        **Data,
-                                            DataCompare cb,
-                                            void        *Expected
-                                            );
+                                           const char   *Str,
+                                           void         **Data,
+                                           DataCompare  cb,
+                                           void         *Expected
+                                           );
 
 BOOL StringChunk_Match(StringChunk      *dl,
-                        const char      *Str,
-                        const uint32_t  *HashValue,
-                        void            **Data,
-                        DataCompare     cb,
-                        void            *Expected
-                        );
+                       const char       *Str,
+                       const uint32_t   *HashValue,
+                       void             **Data,
+                       DataCompare      cb,
+                       void             *Expected
+                       );
 
 BOOL StringChunk_Match_Exactly(StringChunk      *dl,
-                                const char      *Str,
-                                const uint32_t  *HashValue,
-                                void            **Data,
-                                DataCompare     cb,
-                                void            *Expected
-                                );
+                               const char       *Str,
+                               const uint32_t   *HashValue,
+                               void             **Data,
+                               DataCompare      cb,
+                               void             *Expected
+                               );
 
 BOOL StringChunk_Domain_Match_NoWildCard(StringChunk    *dl,
-                                        const char      *Domain,
-                                        const uint32_t  *HashValue,
-                                        void            **Data,
-                                        DataCompare     cb,
-                                        void            *Expected
-                                        );
+                                         const char     *Domain,
+                                         const uint32_t *HashValue,
+                                         void           **Data,
+                                         DataCompare    cb,
+                                         void           *Expected
+                                         );
 
 /* Closest */
 BOOL StringChunk_Domain_Match(StringChunk       *dl,
-                                const char      *Domain,
-                                const uint32_t  *HashValue,
-                                void            **Data,
-                                DataCompare     cb,
-                                void            *Expected
-                                );
+                              const char        *Domain,
+                              const uint32_t    *HashValue,
+                              void              **Data,
+                              DataCompare       cb,
+                              void              *Expected
+                              );
 
 BOOL StringChunk_Domain_Match_WildCardRandom(StringChunk    *dl,
-                                            const char      *Domain,
-                                            const uint32_t  *HashValue,
-                                            void            **Data,
-                                            DataCompare     cb,
-                                            void            *Expected
-                                            );
+                                             const char     *Domain,
+                                             const uint32_t *HashValue,
+                                             void           **Data,
+                                             DataCompare    cb,
+                                             void           *Expected
+                                             );
 
 const char *StringChunk_Enum_NoWildCard(StringChunk *dl, int32_t *Start, void **Data);
 

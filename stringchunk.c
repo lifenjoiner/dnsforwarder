@@ -94,10 +94,10 @@ int StringChunk_Add(StringChunk *dl,
     if( AdditionalData != NULL && LengthOfAdditionalData > 0 )
     {
         NewEntry.Data = sb->Add(sb,
-                             AdditionalData,
-                             LengthOfAdditionalData,
-                             TRUE
-                             );
+                                AdditionalData,
+                                LengthOfAdditionalData,
+                                TRUE
+                                );
         if( NewEntry.Data == NULL )
         {
             return -1;
@@ -129,10 +129,10 @@ int StringChunk_Add(StringChunk *dl,
 }
 
 int StringChunk_Add_Domain(StringChunk  *dl,
-                            const char  *Domain,
-                            const void  *AdditionalData,
-                            int         LengthOfAdditionalData /* The length will not be stored. */
-                            )
+                           const char   *Domain,
+                           const void   *AdditionalData,
+                           int          LengthOfAdditionalData /* The length will not be stored. */
+                           )
 {
     if( *Domain == '.' )
     {
@@ -233,11 +233,11 @@ BOOL StringChunk_Match_OnlyWildCard(StringChunk *dl,
 }
 
 BOOL StringChunk_Match_OnlyWildCard_GetOne(StringChunk  *dl,
-                                            const char  *Str,
-                                            void        **Data,
-                                            DataCompare cb,
-                                            void        *Expected
-                                            )
+                                           const char   *Str,
+                                           void         **Data,
+                                           DataCompare  cb,
+                                           void         *Expected
+                                           )
 {
     Array           Matches;
     Array           MatchesAny;
@@ -302,23 +302,23 @@ BOOL StringChunk_Match_OnlyWildCard_GetOne(StringChunk  *dl,
 }
 
 BOOL StringChunk_Match(StringChunk      *dl,
-                        const char      *Str,
-                        const uint32_t  *HashValue,
-                        void            **Data,
-                        DataCompare     cb,
-                        void            *Expected
-                        )
+                       const char       *Str,
+                       const uint32_t   *HashValue,
+                       void             **Data,
+                       DataCompare      cb,
+                       void             *Expected
+                       )
 {
     return (StringChunk_Match_NoWildCard(dl, Str, HashValue, Data, cb, Expected) ||
-        StringChunk_Match_OnlyWildCard(dl, Str, Data, cb, Expected));
+            StringChunk_Match_OnlyWildCard(dl, Str, Data, cb, Expected));
 }
 
 static BOOL StringChunk_Match_WildCard_Exactly(StringChunk  *dl,
-                                            const char      *Str,
-                                            void            **Data,
-                                            DataCompare     cb,
-                                            void            *Expected
-                                            )
+                                               const char   *Str,
+                                               void         **Data,
+                                               DataCompare  cb,
+                                               void         *Expected
+                                               )
 {
     Array           *wl;
 
@@ -361,24 +361,24 @@ static BOOL StringChunk_Match_WildCard_Exactly(StringChunk  *dl,
 }
 
 BOOL StringChunk_Match_Exactly(StringChunk      *dl,
-                                const char      *Str,
-                                const uint32_t  *HashValue,
-                                void            **Data,
-                                DataCompare     cb,
-                                void            *Expected
-                                )
+                               const char       *Str,
+                               const uint32_t   *HashValue,
+                               void             **Data,
+                               DataCompare      cb,
+                               void             *Expected
+                               )
 {
     return (StringChunk_Match_NoWildCard(dl, Str, HashValue, Data, cb, Expected) ||
-        StringChunk_Match_WildCard_Exactly(dl, Str, Data, cb, Expected));
+            StringChunk_Match_WildCard_Exactly(dl, Str, Data, cb, Expected));
 }
 
 BOOL StringChunk_Domain_Match_NoWildCard(StringChunk    *dl,
-                                        const char      *Domain,
-                                        const uint32_t  *HashValue,
-                                        void            **Data,
-                                        DataCompare     cb,
-                                        void            *Expected
-                                        )
+                                         const char     *Domain,
+                                         const uint32_t *HashValue,
+                                         void           **Data,
+                                         DataCompare    cb,
+                                         void           *Expected
+                                         )
 {
     if( dl == NULL )
     {
@@ -406,24 +406,24 @@ BOOL StringChunk_Domain_Match_NoWildCard(StringChunk    *dl,
 }
 
 BOOL StringChunk_Domain_Match(StringChunk       *dl,
-                                const char      *Domain,
-                                const uint32_t  *HashValue,
-                                void            **Data,
-                                DataCompare     cb,
-                                void            *Expected
-                                )
+                              const char        *Domain,
+                              const uint32_t    *HashValue,
+                              void              **Data,
+                              DataCompare       cb,
+                              void              *Expected
+                              )
 {
     return (StringChunk_Domain_Match_NoWildCard(dl, Domain, HashValue, Data, cb, Expected) ||
             StringChunk_Match_OnlyWildCard(dl, Domain, Data, cb, Expected));
 }
 
 BOOL StringChunk_Domain_Match_WildCardRandom(StringChunk    *dl,
-                                            const char      *Domain,
-                                            const uint32_t  *HashValue,
-                                            void            **Data,
-                                            DataCompare     cb,
-                                            void            *Expected
-                                            )
+                                             const char     *Domain,
+                                             const uint32_t *HashValue,
+                                             void           **Data,
+                                             DataCompare    cb,
+                                             void           *Expected
+                                             )
 {
     return (StringChunk_Domain_Match_NoWildCard(dl, Domain, HashValue, Data, cb, Expected) ||
             StringChunk_Match_OnlyWildCard_GetOne(dl, Domain, Data, cb, Expected));
