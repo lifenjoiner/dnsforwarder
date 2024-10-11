@@ -23,7 +23,7 @@
 #include "timedtask.h"
 #include "domainstatistic.h"
 
-#define VERSION__ "6.5.4"
+#define VERSION__ "6.6.0"
 #define DESCRIPTIONS "DNSforwarder\nVersion: "VERSION__". License: GPL v3.\nTime of compilation: "__DATE__" "__TIME__".\n\n"
 
 static char     *ConfigFile;
